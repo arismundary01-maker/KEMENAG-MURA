@@ -128,8 +128,8 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return INITIAL_PERMOHONAN;
   });
 
-  const [currentRole, setCurrentRole] = useState<UserRole>('pemohon');
-  const [activeView, setActiveView] = useState<'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier' | 'super_admin_portal'>('public_portal');
+  const [currentRole, setCurrentRole] = useState<UserRole>('super_admin');
+  const [activeView, setActiveView] = useState<'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier' | 'super_admin_portal'>('super_admin_portal');
   const [selectedSeksiTab, setSelectedSeksiTab] = useState<SeksiType>('pendis');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [selectedTrackingResi, setSelectedTrackingResi] = useState<string | null>(null);

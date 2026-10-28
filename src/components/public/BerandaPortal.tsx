@@ -36,7 +36,6 @@ import {
   Compass,
   Link as LinkIcon
 } from 'lucide-react';
-import { WebPortalViewerModal } from './WebPortalViewerModal';
 
 interface BerandaPortalProps {
   onOpenPermohonanModal: (layananPreset?: LayananKatalog) => void;
@@ -156,37 +155,11 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
     title: string;
   } | null>(null);
 
-  // 6. Web Portal Viewer Modal State (Requirement: Akses Web Utama Resmi & SIPENDIS MURA, kembali otomatis ke Beranda PTSP)
-  const [portalViewerData, setPortalViewerData] = useState<{
-    isOpen: boolean;
-    url: string;
-    title: string;
-    singkatan?: string;
-  } | null>(null);
-
   // Success Feedback Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
-  };
-
-  const handleOpenPortalWeb = (app: MenuAplikasiWeb) => {
-    // Record auto-return flag in sessionStorage so if opened in tab or on return, it redirects to Beranda PTSP
-    sessionStorage.setItem('kemenag_return_to_beranda_on_focus', 'true');
-    setPortalViewerData({
-      isOpen: true,
-      url: app.url,
-      title: app.namaAplikasi,
-      singkatan: app.singkatan
-    });
-  };
-
-  const handleReturnToBerandaFromPortal = () => {
-    setPortalViewerData(null);
-    setActiveView('public_portal');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast('👋 Selamat datang kembali di Beranda PTSP Kemenag Murung Raya!');
   };
 
   // Tracking submit
@@ -939,10 +912,11 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                         <span className="font-medium">Online & Aktif</span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleOpenPortalWeb(app)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                      <a
+                        href={app.url}
+                        target={app.bukaTabBaru !== false ? '_blank' : '_self'}
+                        rel="noopener noreferrer"
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs ${
                           isMainPortal
                             ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-emerald-700/20'
                             : 'bg-teal-700 hover:bg-teal-800 text-white'
@@ -950,7 +924,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                       >
                         <span>Buka Laman Web</span>
                         <ExternalLink className="w-3 h-3" />
-                      </button>
+                      </a>
                     </div>
                   </div>
                 );
@@ -2300,18 +2274,6 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
             </div>
           </div>
         </div>
-      )}
-
-      {/* 13. MODAL VIEWER WEB UTAMA & SIPENDIS MURA (AUTO RETURN TO BERANDA PTSP) */}
-      {portalViewerData && (
-        <WebPortalViewerModal
-          isOpen={portalViewerData.isOpen}
-          url={portalViewerData.url}
-          title={portalViewerData.title}
-          singkatan={portalViewerData.singkatan}
-          onClose={() => setPortalViewerData(null)}
-          onReturnToBeranda={handleReturnToBerandaFromPortal}
-        />
       )}
     </div>
   );

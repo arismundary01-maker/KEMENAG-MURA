@@ -446,9 +446,6 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
                       href="https://sipendismura.my.id"
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => {
-                        sessionStorage.setItem('kemenag_return_to_beranda_on_focus', 'true');
-                      }}
                       className="px-5 py-3 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-black text-xs rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer text-center"
                     >
                       <Globe className="w-4 h-4 text-emerald-950" />
