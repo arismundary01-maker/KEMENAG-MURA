@@ -1,6 +1,7 @@
 import React from 'react';
 import { Permohonan } from '../../types/ptsp';
 import { SEKSI_CONFIG } from '../../data/initialData';
+import { usePTSP } from '../../context/PTSPContext';
 import { Printer, X, CheckCircle2, QrCode } from 'lucide-react';
 
 interface ReceiptSlipModalProps {
@@ -12,6 +13,7 @@ export const ReceiptSlipModal: React.FC<ReceiptSlipModalProps> = ({
   permohonan, 
   onClose 
 }) => {
+  const { pengaturanWeb } = usePTSP();
   if (!permohonan) return null;
 
   const handlePrint = () => {
@@ -47,13 +49,13 @@ export const ReceiptSlipModal: React.FC<ReceiptSlipModalProps> = ({
           {/* Slip Header */}
           <div className="text-center border-b-2 border-slate-900 pb-3 mb-4">
             <h3 className="font-black text-sm uppercase tracking-wide">
-              KEMENTERIAN AGAMA KABUPATEN MUSI RAWAS
+              {pengaturanWeb.namaKantor.toUpperCase()}
             </h3>
             <h4 className="font-bold text-xs uppercase text-slate-700">
               PELAYANAN TERPADU SATU PINTU (PTSP)
             </h4>
             <p className="text-[10px] text-slate-500">
-              Komplek Perkantoran Pemkab Musi Rawas, Muara Beliti • Telp: (0733) 4540112
+              {pengaturanWeb.alamatLengkap} • Telp: {pengaturanWeb.telepon}
             </p>
           </div>
 

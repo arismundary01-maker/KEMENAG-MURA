@@ -1,6 +1,7 @@
 import React from 'react';
 import { Permohonan } from '../../types/ptsp';
 import { SEKSI_CONFIG } from '../../data/initialData';
+import { usePTSP } from '../../context/PTSPContext';
 import { 
   Printer, 
   X, 
@@ -20,6 +21,7 @@ export const OfficialDocumentModal: React.FC<OfficialDocumentModalProps> = ({
   permohonan, 
   onClose 
 }) => {
+  const { pengaturanWeb } = usePTSP();
   if (!permohonan) return null;
 
   const handlePrint = () => {
@@ -33,19 +35,19 @@ export const OfficialDocumentModal: React.FC<OfficialDocumentModalProps> = ({
     nomorSurat: tte.nomorDokumen || `B-1428/Kk.06.05/PP.00/10/2026`,
     konsideranMenimbang: [
       'Bahwa permohonan yang diajukan telah diteliti dan memenuhi persyaratan administratif maupun teknis sesuai peraturan perundang-undangan.',
-      'Bahwa berdasarkan hasil telaah tim teknis Kantor Kementerian Agama Kabupaten Musi Rawas dipandang perlu menerbitkan surat rekomendasi.'
+      `Bahwa berdasarkan hasil telaah tim teknis ${pengaturanWeb.namaKantor} dipandang perlu menerbitkan surat rekomendasi.`
     ],
     konsideranMengingat: [
       'Undang-Undang Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional / Regulasi Terkait;',
       'Peraturan Menteri Agama Nomor 34 Tahun 2016 tentang Organisasi dan Tata Kerja Kementerian Agama.'
     ],
     diktumKeputusan: [
-      `MEMBERIKAN REKOMENDASI kepada: ${permohonan.pemohon.instansiOrLembaga || permohonan.pemohon.namaLengkap} yang beralamat di ${permohonan.pemohon.alamat}, Kec. ${permohonan.pemohon.kecamatan}, Kab. Musi Rawas.`,
+      `MEMBERIKAN REKOMENDASI kepada: ${permohonan.pemohon.instansiOrLembaga || permohonan.pemohon.namaLengkap} yang beralamat di ${permohonan.pemohon.alamat}, Kec. ${permohonan.pemohon.kecamatan}, ${pengaturanWeb.kabupaten}.`,
       `Untuk keperluan: ${permohonan.perihal}. Surat rekomendasi ini berlaku sah sejak tanggal ditetapkan.`
     ],
     tembusan: [
-      'Kepala Kantor Wilayah Kementerian Agama Provinsi Sumatera Selatan',
-      'Bupati Musi Rawas',
+      'Kepala Kantor Wilayah Kementerian Agama Provinsi Kalimantan Tengah',
+      `Bupati ${pengaturanWeb.kabupaten.replace('Kabupaten ', '')}`,
       'Arsip Pelayanan Terpadu Satu Pintu (PTSP)'
     ],
     peruntukan: permohonan.pemohon.instansiOrLembaga || permohonan.pemohon.namaLengkap
@@ -92,11 +94,11 @@ export const OfficialDocumentModal: React.FC<OfficialDocumentModalProps> = ({
                     KEMENTERIAN AGAMA REPUBLIK INDONESIA
                   </h3>
                   <h4 className="font-extrabold text-xs sm:text-sm tracking-wide uppercase text-slate-900 font-sans">
-                    KANTOR KEMENTERIAN AGAMA KABUPATEN MUSI RAWAS
+                    {pengaturanWeb.namaKantor.toUpperCase()}
                   </h4>
                   <p className="text-[10px] sm:text-xs font-sans text-slate-700 leading-tight mt-0.5">
-                    Komplek Perkantoran Pemkab Musi Rawas, Muara Beliti, Kabupaten Musi Rawas, Sumatera Selatan 31661<br />
-                    Telepon: (0733) 4540112 • Faksimile: (0733) 4540113 • Pos-el: kemenagmura@kemenag.go.id • Laman: musi-rawas.kemenag.go.id
+                    {pengaturanWeb.alamatLengkap}<br />
+                    Telepon: {pengaturanWeb.telepon} • Pos-el: {pengaturanWeb.email} • Laman: {pengaturanWeb.website}
                   </p>
                 </div>
               </div>

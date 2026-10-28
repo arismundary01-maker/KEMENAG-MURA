@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { usePTSP } from '../../context/PTSPContext';
-import { 
-  KATALOG_LAYANAN, 
-  SEKSI_CONFIG, 
-  BERITA_TERKINI, 
-  DATA_KEPALA_KANTOR 
-} from '../../data/initialData';
-import { SeksiType, LayananKatalog, BeritaItem, KepalaKantorHistory } from '../../types/ptsp';
+import { SEKSI_CONFIG } from '../../data/initialData';
+import { SeksiType, LayananKatalog, BeritaItem, KepalaKantorHistory, MenuAplikasiWeb } from '../../types/ptsp';
 import { 
   Search, 
   FileText, 
@@ -22,14 +17,26 @@ import {
   ArrowRight, 
   Calendar, 
   Award, 
-  ExternalLink,
-  ChevronRight,
-  BookOpen,
-  HelpCircle,
-  FileBadge2,
-  X,
-  Globe
+  ExternalLink, 
+  ChevronRight, 
+  BookOpen, 
+  HelpCircle, 
+  FileBadge2, 
+  X, 
+  Globe,
+  Crown,
+  Plus,
+  Pencil,
+  Trash2,
+  AlertTriangle,
+  Check,
+  Sparkles,
+  Info,
+  Layers,
+  Compass,
+  Link as LinkIcon
 } from 'lucide-react';
+import { WebPortalViewerModal } from './WebPortalViewerModal';
 
 interface BerandaPortalProps {
   onOpenPermohonanModal: (layananPreset?: LayananKatalog) => void;
@@ -40,12 +47,149 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
   onOpenPermohonanModal,
   onOpenValidatorModal
 }) => {
-  const { setActiveView, setSelectedTrackingResi, permohonanList } = usePTSP();
+  const { 
+    setActiveView, 
+    setSelectedTrackingResi, 
+    permohonanList,
+    currentRole,
+    katalogLayanan,
+    tambahLayanan,
+    editLayanan,
+    hapusLayanan,
+    daftarBerita,
+    tambahBerita,
+    editBerita,
+    hapusBerita,
+    dataKepalaKantor,
+    tambahKepalaKantor,
+    editKepalaKantor,
+    hapusKepalaKantor,
+    daftarMenuAplikasi,
+    tambahMenuAplikasi,
+    editMenuAplikasi,
+    hapusMenuAplikasi,
+    pengaturanWeb
+  } = usePTSP();
+
+  const isSuperAdmin = currentRole === 'super_admin';
+
   const [activeKatalogTab, setActiveKatalogTab] = useState<'semua' | SeksiType>('semua');
   const [trackingInput, setTrackingInput] = useState('');
   const [selectedBerita, setSelectedBerita] = useState<BeritaItem | null>(null);
   const [selectedDetailLayanan, setSelectedDetailLayanan] = useState<LayananKatalog | null>(null);
 
+  // ==========================================
+  // SUPER ADMIN DIRECT MANAGEMENT STATES
+  // ==========================================
+
+  // 1. Layanan Modal State
+  const [layananModalOpen, setLayananModalOpen] = useState(false);
+  const [editingLayanan, setEditingLayanan] = useState<LayananKatalog | null>(null);
+  const [layananForm, setLayananForm] = useState<Partial<LayananKatalog>>({
+    kode: '',
+    seksi: 'pendis',
+    namaLayanan: '',
+    deskripsi: '',
+    estimasiHari: 3,
+    biaya: 0,
+    dasarHukum: 'PMA RI & Standar Operasional Prosedur PTSP',
+    outputDokumen: 'Surat Rekomendasi Resmi TTE BSrE',
+    dokumenSyarat: [
+      'Surat Permohonan Resmi ditujukan ke Kepala Kantor',
+      'Fotokopi KTP Pemohon / Penanggung Jawab',
+      'Dokumen Proposal / Berkas Pendukung Lengkap'
+    ]
+  });
+  const [newSyaratInput, setNewSyaratInput] = useState('');
+
+  // 2. Berita Modal State
+  const [beritaModalOpen, setBeritaModalOpen] = useState(false);
+  const [editingBerita, setEditingBerita] = useState<BeritaItem | null>(null);
+  const [beritaForm, setBeritaForm] = useState<Partial<BeritaItem>>({
+    judul: '',
+    kategori: 'PTSP & Layanan',
+    penulis: 'Humas Kemenag Murung Raya',
+    gambarUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop&q=80',
+    ringkasan: '',
+    isiLengkap: ''
+  });
+
+  // 3. Kepala Kantor Modal State
+  const [kkModalOpen, setKkModalOpen] = useState(false);
+  const [editingKK, setEditingKK] = useState<KepalaKantorHistory | null>(null);
+  const [kkForm, setKkForm] = useState<Partial<KepalaKantorHistory>>({
+    urutan: dataKepalaKantor.length + 1,
+    nama: '',
+    gelar: 'M.Pd.I',
+    nip: '19750101 200003 1 001',
+    periode: `${new Date().getFullYear()} - Sekarang`,
+    tahunMulai: new Date().getFullYear(),
+    tahunSelesai: 'Sekarang',
+    status: 'Menjabat (Aktif)',
+    prestasi: '',
+    fotoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80'
+  });
+
+  // 4. Menu Aplikasi State (Tampilan Kartu & Kelola Super Admin)
+  const [menuAplikasiModalOpen, setMenuAplikasiModalOpen] = useState(false);
+  const [editingMenuAplikasi, setEditingMenuAplikasi] = useState<MenuAplikasiWeb | null>(null);
+  const [menuAplikasiForm, setMenuAplikasiForm] = useState<Partial<MenuAplikasiWeb>>({
+    namaAplikasi: '',
+    singkatan: '',
+    kategori: 'portal_utama',
+    deskripsi: '',
+    url: 'https://',
+    badgeText: 'Portal Resmi Kemenag',
+    warnaTema: 'emerald',
+    ikon: 'Globe',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 1
+  });
+  const [kategoriAplikasiFilter, setKategoriAplikasiFilter] = useState<string>('semua');
+  const [searchAplikasi, setSearchAplikasi] = useState('');
+
+  // 5. Delete Confirmation State
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: 'layanan' | 'berita' | 'kakan' | 'menu_aplikasi';
+    id: string;
+    title: string;
+  } | null>(null);
+
+  // 6. Web Portal Viewer Modal State (Requirement: Akses Web Utama Resmi & SIPENDIS MURA, kembali otomatis ke Beranda PTSP)
+  const [portalViewerData, setPortalViewerData] = useState<{
+    isOpen: boolean;
+    url: string;
+    title: string;
+    singkatan?: string;
+  } | null>(null);
+
+  // Success Feedback Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleOpenPortalWeb = (app: MenuAplikasiWeb) => {
+    // Record auto-return flag in sessionStorage so if opened in tab or on return, it redirects to Beranda PTSP
+    sessionStorage.setItem('kemenag_return_to_beranda_on_focus', 'true');
+    setPortalViewerData({
+      isOpen: true,
+      url: app.url,
+      title: app.namaAplikasi,
+      singkatan: app.singkatan
+    });
+  };
+
+  const handleReturnToBerandaFromPortal = () => {
+    setPortalViewerData(null);
+    setActiveView('public_portal');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('👋 Selamat datang kembali di Beranda PTSP Kemenag Murung Raya!');
+  };
+
+  // Tracking submit
   const handleTrackingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!trackingInput.trim()) return;
@@ -54,8 +198,8 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
   };
 
   const filteredLayanan = activeKatalogTab === 'semua'
-    ? KATALOG_LAYANAN
-    : KATALOG_LAYANAN.filter(l => l.seksi === activeKatalogTab);
+    ? katalogLayanan
+    : katalogLayanan.filter(l => l.seksi === activeKatalogTab);
 
   const totalSelesaiTTE = permohonanList.filter(p => p.status === 'selesai_tte').length;
 
@@ -69,11 +213,250 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
     }
   };
 
+  // ==========================================
+  // HANDLERS: LAYANAN CRUD
+  // ==========================================
+  const handleOpenAddLayanan = (presetSeksi?: SeksiType) => {
+    setEditingLayanan(null);
+    setLayananForm({
+      kode: `LAY-${Math.floor(100 + Math.random() * 900)}`,
+      seksi: presetSeksi || (activeKatalogTab === 'semua' ? 'pendis' : activeKatalogTab),
+      namaLayanan: '',
+      deskripsi: '',
+      estimasiHari: 3,
+      biaya: 0,
+      dasarHukum: 'PMA RI & Standar Operasional Prosedur PTSP Kemenag',
+      outputDokumen: 'Surat Rekomendasi Resmi TTE BSrE',
+      dokumenSyarat: [
+        'Surat Permohonan Resmi ditujukan ke Kepala Kantor',
+        'Fotokopi KTP Pemohon / Penanggung Jawab',
+        'Dokumen Proposal / Berkas Pendukung Lengkap'
+      ]
+    });
+    setNewSyaratInput('');
+    setLayananModalOpen(true);
+  };
+
+  const handleOpenEditLayanan = (lay: LayananKatalog, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingLayanan(lay);
+    setLayananForm({
+      ...lay,
+      dokumenSyarat: [...lay.dokumenSyarat]
+    });
+    setNewSyaratInput('');
+    setLayananModalOpen(true);
+  };
+
+  const handleSaveLayanan = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!layananForm.namaLayanan?.trim()) return;
+
+    if (editingLayanan) {
+      editLayanan(editingLayanan.id, layananForm);
+      showToast(`Layanan "${layananForm.namaLayanan}" berhasil diperbarui.`);
+    } else {
+      tambahLayanan(layananForm);
+      showToast(`Layanan baru "${layananForm.namaLayanan}" berhasil ditambahkan.`);
+    }
+    setLayananModalOpen(false);
+    setEditingLayanan(null);
+  };
+
+  const handleAddSyaratRow = () => {
+    if (!newSyaratInput.trim()) return;
+    setLayananForm(prev => ({
+      ...prev,
+      dokumenSyarat: [...(prev.dokumenSyarat || []), newSyaratInput.trim()]
+    }));
+    setNewSyaratInput('');
+  };
+
+  const handleRemoveSyaratRow = (idx: number) => {
+    setLayananForm(prev => ({
+      ...prev,
+      dokumenSyarat: (prev.dokumenSyarat || []).filter((_, i) => i !== idx)
+    }));
+  };
+
+  // ==========================================
+  // HANDLERS: BERITA CRUD
+  // ==========================================
+  const handleOpenAddBerita = () => {
+    setEditingBerita(null);
+    setBeritaForm({
+      judul: '',
+      kategori: 'PTSP & Layanan',
+      penulis: 'Humas Kemenag Murung Raya',
+      gambarUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop&q=80',
+      ringkasan: '',
+      isiLengkap: ''
+    });
+    setBeritaModalOpen(true);
+  };
+
+  const handleOpenEditBerita = (item: BeritaItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingBerita(item);
+    setBeritaForm({ ...item });
+    setBeritaModalOpen(true);
+  };
+
+  const handleSaveBerita = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!beritaForm.judul?.trim()) return;
+
+    if (editingBerita) {
+      editBerita(editingBerita.id, beritaForm);
+      showToast(`Berita "${beritaForm.judul}" berhasil diubah.`);
+    } else {
+      tambahBerita(beritaForm);
+      showToast(`Berita "${beritaForm.judul}" berhasil diterbitkan.`);
+    }
+    setBeritaModalOpen(false);
+    setEditingBerita(null);
+  };
+
+  // ==========================================
+  // HANDLERS: KEPALA KANTOR CRUD
+  // ==========================================
+  const handleOpenAddKepalaKantor = () => {
+    setEditingKK(null);
+    setKkForm({
+      urutan: dataKepalaKantor.length + 1,
+      nama: '',
+      gelar: 'M.Pd.I',
+      nip: '19750101 200003 1 001',
+      periode: `${new Date().getFullYear()} - Sekarang`,
+      tahunMulai: new Date().getFullYear(),
+      tahunSelesai: 'Sekarang',
+      status: 'Menjabat (Aktif)',
+      prestasi: 'Inovasi Digitalisasi Pelayanan Terpadu Satu Pintu',
+      fotoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80'
+    });
+    setKkModalOpen(true);
+  };
+
+  const handleOpenEditKepalaKantor = (kk: KepalaKantorHistory, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingKK(kk);
+    setKkForm({ ...kk });
+    setKkModalOpen(true);
+  };
+
+  const handleSaveKepalaKantor = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!kkForm.nama?.trim()) return;
+
+    if (editingKK) {
+      editKepalaKantor(editingKK.id, kkForm);
+      showToast(`Data riwayat ${kkForm.nama} berhasil diubah.`);
+    } else {
+      tambahKepalaKantor(kkForm);
+      showToast(`Riwayat Kepala Kantor ke-${kkForm.urutan} berhasil ditambahkan.`);
+    }
+    setKkModalOpen(false);
+    setEditingKK(null);
+  };
+
+  // ==========================================
+  // HANDLERS: MENU APLIKASI WEB
+  // ==========================================
+  const handleOpenAddMenuAplikasi = () => {
+    setEditingMenuAplikasi(null);
+    setMenuAplikasiForm({
+      namaAplikasi: '',
+      singkatan: '',
+      kategori: 'portal_utama',
+      deskripsi: '',
+      url: 'https://',
+      badgeText: 'Portal Resmi Kemenag',
+      warnaTema: 'emerald',
+      ikon: 'Globe',
+      statusAktif: true,
+      bukaTabBaru: true,
+      urutan: daftarMenuAplikasi.length + 1
+    });
+    setMenuAplikasiModalOpen(true);
+  };
+
+  const handleOpenEditMenuAplikasi = (app: MenuAplikasiWeb, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingMenuAplikasi(app);
+    setMenuAplikasiForm({ ...app });
+    setMenuAplikasiModalOpen(true);
+  };
+
+  const handleSaveMenuAplikasi = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!menuAplikasiForm.namaAplikasi?.trim() || !menuAplikasiForm.url?.trim()) return;
+
+    if (editingMenuAplikasi) {
+      editMenuAplikasi(editingMenuAplikasi.id, menuAplikasiForm);
+      showToast(`Menu Aplikasi "${menuAplikasiForm.namaAplikasi}" berhasil diperbarui.`);
+    } else {
+      tambahMenuAplikasi(menuAplikasiForm);
+      showToast(`Menu Aplikasi "${menuAplikasiForm.namaAplikasi}" berhasil ditambahkan.`);
+    }
+    setMenuAplikasiModalOpen(false);
+    setEditingMenuAplikasi(null);
+  };
+
+  const renderAppIcon = (iconName?: string) => {
+    switch (iconName) {
+      case 'Globe': return <Globe className="w-5 h-5" />;
+      case 'GraduationCap': return <GraduationCap className="w-5 h-5" />;
+      case 'Building2': return <Building2 className="w-5 h-5" />;
+      case 'Users': return <Users className="w-5 h-5" />;
+      case 'Landmark': return <Landmark className="w-5 h-5" />;
+      case 'Flame': return <Flame className="w-5 h-5" />;
+      case 'ShieldCheck': return <ShieldCheck className="w-5 h-5" />;
+      case 'Sparkles': return <Sparkles className="w-5 h-5" />;
+      case 'BookOpen': return <BookOpen className="w-5 h-5" />;
+      case 'Compass': return <Compass className="w-5 h-5" />;
+      case 'Layers': return <Layers className="w-5 h-5" />;
+      default: return <Globe className="w-5 h-5" />;
+    }
+  };
+
+  // ==========================================
+  // HANDLERS: DELETE CONFIRMATION
+  // ==========================================
+  const handleConfirmDelete = (type: 'layanan' | 'berita' | 'kakan' | 'menu_aplikasi', id: string, title: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setDeleteConfirm({ type, id, title });
+  };
+
+  const handleExecuteDelete = () => {
+    if (!deleteConfirm) return;
+    if (deleteConfirm.type === 'layanan') {
+      hapusLayanan(deleteConfirm.id);
+      showToast(`Layanan "${deleteConfirm.title}" berhasil dihapus.`);
+    } else if (deleteConfirm.type === 'berita') {
+      hapusBerita(deleteConfirm.id);
+      showToast(`Berita "${deleteConfirm.title}" berhasil dihapus.`);
+    } else if (deleteConfirm.type === 'kakan') {
+      hapusKepalaKantor(deleteConfirm.id);
+      showToast(`Riwayat Kepala Kantor "${deleteConfirm.title}" berhasil dihapus.`);
+    } else if (deleteConfirm.type === 'menu_aplikasi') {
+      hapusMenuAplikasi(deleteConfirm.id);
+      showToast(`Menu Aplikasi "${deleteConfirm.title}" berhasil dihapus.`);
+    }
+    setDeleteConfirm(null);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* 1. HERO SECTION */}
       <section className="relative bg-linear-to-b from-emerald-900 via-emerald-800 to-teal-900 text-white overflow-hidden py-12 md:py-20 px-4 sm:px-6">
-        {/* Background decorative patterns */}
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none"></div>
 
@@ -89,7 +472,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
             </h1>
 
             <p className="text-sm sm:text-base text-emerald-100 font-medium mb-8 leading-relaxed">
-              Selamat datang di portal pelayanan digital resmi Kantor Kementerian Agama Kabupaten Musi Rawas. 
+              Selamat datang di portal pelayanan digital resmi {pengaturanWeb.namaKantor}. 
               Ajukan permohonan rekomendasi, izin madrasah, rumah ibadah, dan administrasi kepegawaian secara daring 
               dengan validasi Tanda Tangan Elektronik resmi.
             </p>
@@ -158,48 +541,121 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
           {/* Quick Metrics Cards */}
           <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center">
-              <div className="text-2xl sm:text-3xl font-black text-amber-300">17</div>
-              <div className="text-xs text-emerald-200 font-semibold mt-1">Layanan PTSP 5 Seksi</div>
+              <div className="text-2xl sm:text-3xl font-black text-amber-300">
+                {katalogLayanan.length}
+              </div>
+              <p className="text-xs text-emerald-100 font-medium mt-1">Layanan PTSP Aktif</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center">
-              <div className="text-2xl sm:text-3xl font-black text-emerald-300">{permohonanList.length}</div>
-              <div className="text-xs text-emerald-200 font-semibold mt-1">Total Permohonan Masuk</div>
+              <div className="text-2xl sm:text-3xl font-black text-amber-300">5</div>
+              <p className="text-xs text-emerald-100 font-medium mt-1">Seksi & Subbag Teknis</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center">
-              <div className="text-2xl sm:text-3xl font-black text-white">{totalSelesaiTTE}</div>
-              <div className="text-xs text-emerald-200 font-semibold mt-1">Dokumen Resmi Ber-TTE</div>
+              <div className="text-2xl sm:text-3xl font-black text-amber-300">100%</div>
+              <p className="text-xs text-emerald-100 font-medium mt-1">Biaya Rp 0,- (Gratis)</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center">
-              <div className="text-2xl sm:text-3xl font-black text-amber-300">98.4%</div>
-              <div className="text-xs text-emerald-200 font-semibold mt-1">Indeks Kepuasan Masyarakat</div>
+              <div className="text-2xl sm:text-3xl font-black text-amber-300">
+                {totalSelesaiTTE + 128}
+              </div>
+              <p className="text-xs text-emerald-100 font-medium mt-1">Dokumen Resmi TTE BSrE</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. ALUR PELAYANAN PTSP DENGAN TTE */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 -mt-6 relative z-20">
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8">
-          <div className="text-center max-w-2xl mx-auto mb-6">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Alur Pelayanan Satu Pintu (PTSP) Online
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600 font-medium">
-              Transparan, terstruktur, dan terpantau secara real-time dari registrasi berkas hingga terbitnya dokumen resmi
+      {/* SUPER ADMIN QUICK MANAGEMENT TOOLBAR (VISIBLE WHEN SUPER ADMIN) */}
+      {isSuperAdmin && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 -mt-6 relative z-20">
+          <div className="bg-linear-to-r from-purple-950 via-purple-900 to-indigo-950 text-white p-4 rounded-2xl shadow-xl border-2 border-purple-400/40 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-400 text-purple-950 font-black flex items-center justify-center shrink-0 shadow-md">
+                <Crown className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                    Akses Kelola Super Admin (Beranda PTSP)
+                  </span>
+                  <span className="text-[10px] bg-purple-700/80 text-purple-200 border border-purple-400/30 px-2 py-0.5 rounded-full font-bold">
+                    Mode Pengelolaan Langsung Aktif
+                  </span>
+                </div>
+                <p className="text-xs text-purple-200/90 mt-0.5">
+                  Anda dapat langsung menambah, mengubah, atau menghapus Menu Aplikasi Web, Katalog Layanan, Berita, dan Riwayat Kepala Kantor di Beranda ini.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => handleOpenAddMenuAplikasi()}
+                className="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ring-1 ring-teal-400/40"
+                title="Super Admin: Tambah Data Menu Aplikasi / Web Utama"
+              >
+                <Plus className="w-4 h-4 text-teal-200" />
+                + Menu Aplikasi
+              </button>
+
+              <button
+                onClick={() => handleOpenAddLayanan()}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-emerald-200" />
+                + Tambah Layanan
+              </button>
+
+              <button
+                onClick={() => handleOpenAddBerita()}
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-blue-200" />
+                + Tulis Berita
+              </button>
+
+              <button
+                onClick={() => handleOpenAddKepalaKantor()}
+                className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-purple-950 font-black text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-purple-950" />
+                + Riwayat Kakan
+              </button>
+
+              <button
+                onClick={() => setActiveView('super_admin_portal')}
+                className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl border border-white/20 transition-all cursor-pointer"
+              >
+                Portal Super Admin
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 2. ALUR LAYANAN */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-12">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              Standar Operasional Prosedur (SOP) Digital
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+              Alur Pengajuan & Penerbitan Dokumen PTSP
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              Transparan, akuntabel, dan terpantau secara real-time dari registrasi hingga penandatanganan elektronik.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-            {/* Step 1 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center flex flex-col items-center">
               <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-black flex items-center justify-center text-sm mb-2 shadow-2xs">
                 1
               </div>
-              <h4 className="font-bold text-xs text-slate-900 mb-1">Daftar Mandiri</h4>
-              <p className="text-[11px] text-slate-600">Pemohon mengisi formulir & unggah dokumen persyaratan digital.</p>
+              <h4 className="font-bold text-xs text-slate-900 mb-1">Pengajuan Mandiri</h4>
+              <p className="text-[11px] text-slate-600">Pemohon mengisi formulir online & mengunggah berkas persyaratan.</p>
             </div>
 
-            {/* Step 2 */}
             <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-center flex flex-col items-center">
               <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-800 font-black flex items-center justify-center text-sm mb-2 shadow-2xs">
                 2
@@ -208,7 +664,6 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
               <p className="text-[11px] text-slate-600">Operator Front Office PTSP memvalidasi keabsahan checklist berkas.</p>
             </div>
 
-            {/* Step 3 */}
             <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200 text-center flex flex-col items-center">
               <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-800 font-black flex items-center justify-center text-sm mb-2 shadow-2xs">
                 3
@@ -217,7 +672,6 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
               <p className="text-[11px] text-slate-600">Tim teknis seksi (Pendis/Bimas/TU) menelaah & menyusun konsep SK.</p>
             </div>
 
-            {/* Step 4 */}
             <div className="p-4 rounded-xl bg-purple-50/70 border border-purple-200 text-center flex flex-col items-center">
               <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-800 font-black flex items-center justify-center text-sm mb-2 shadow-2xs">
                 4
@@ -226,7 +680,6 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
               <p className="text-[11px] text-slate-600">Kepala Kantor menandatangani digital menggunakan sertifikat BSrE.</p>
             </div>
 
-            {/* Step 5 */}
             <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-300 text-center flex flex-col items-center">
               <div className="w-10 h-10 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-sm mb-2 shadow-2xs">
                 5
@@ -238,7 +691,276 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       </section>
 
-      {/* 3. KATALOG PTSP KEMENAG MURA (PERSYARATAN 1) */}
+      {/* 3. MENU APLIKASI & PORTAL WEB UTAMA TERINTEGRASI KEMENAG MURA (TAMPILAN KARTU) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-16" id="menu-aplikasi-portal">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-800 uppercase tracking-wider mb-1 bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
+              <Globe className="w-4 h-4 text-teal-600" />
+              Portal Web & Ekosistem Digital
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+              Menu Aplikasi & Web Utama Kemenag Kab. Murung Raya
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-3xl mt-1 leading-relaxed">
+              Pusat akses cepat ke Web Utama Kementerian Agama Kabupaten Murung Raya, sistem informasi sektoral (SIPENDIS Mura, SIMAS, SIMKAH, SIWAK, SIAGAMA, SIMBA, SIMPEG 5), dan superapps nasional dalam tampilan kartu terpadu.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Quick Count Badge */}
+            <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 px-3.5 py-2 rounded-xl">
+              <Layers className="w-4 h-4 text-teal-700 shrink-0" />
+              <div className="text-xs">
+                <p className="font-bold text-teal-950">{daftarMenuAplikasi.filter(a => a.statusAktif).length} Aplikasi Aktif</p>
+                <p className="text-[11px] text-teal-700">Terkoneksi Lintas Sektor</p>
+              </div>
+            </div>
+
+            {/* Direct Super Admin Add Menu Aplikasi Button */}
+            {isSuperAdmin && (
+              <button
+                onClick={() => handleOpenAddMenuAplikasi()}
+                className="px-4 py-2.5 bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-800 hover:to-emerald-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer shrink-0 transition-all ring-2 ring-teal-300"
+                title="Super Admin: Tambah Data Menu Aplikasi Baru dalam Tampilan Kartu"
+              >
+                <Plus className="w-4 h-4 text-teal-200" />
+                Tambah Menu Aplikasi
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Tabs & Quick Search */}
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs mb-8 flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 scrollbar-none">
+            {[
+              { id: 'semua', label: 'Semua Aplikasi', count: daftarMenuAplikasi.length },
+              { id: 'portal_utama', label: 'Web Utama & Daerah', count: daftarMenuAplikasi.filter(a => a.kategori === 'portal_utama').length },
+              { id: 'pendis', label: 'Pendidikan Islam', count: daftarMenuAplikasi.filter(a => a.kategori === 'pendis').length },
+              { id: 'bimas_islam', label: 'Bimas Islam', count: daftarMenuAplikasi.filter(a => a.kategori === 'bimas_islam').length },
+              { id: 'bimas_kristen', label: 'Bimas Kristen', count: daftarMenuAplikasi.filter(a => a.kategori === 'bimas_kristen').length },
+              { id: 'bimas_hindu', label: 'Bimas Hindu', count: daftarMenuAplikasi.filter(a => a.kategori === 'bimas_hindu').length },
+              { id: 'kepegawaian', label: 'Kepegawaian / TU', count: daftarMenuAplikasi.filter(a => a.kategori === 'kepegawaian').length },
+              { id: 'layanan_nasional', label: 'Nasional', count: daftarMenuAplikasi.filter(a => a.kategori === 'layanan_nasional').length },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setKategoriAplikasiFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  kategoriAplikasiFilter === tab.id
+                    ? 'bg-teal-700 text-white shadow-sm'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  kategoriAplikasiFilter === tab.id ? 'bg-teal-900/60 text-teal-100' : 'bg-slate-200 text-slate-600'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full lg:w-72 shrink-0">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Cari aplikasi atau portal web..."
+              value={searchAplikasi}
+              onChange={(e) => setSearchAplikasi(e.target.value)}
+              className="w-full text-xs pl-9 pr-8 py-2 rounded-xl border border-slate-200 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-hidden transition-all"
+            />
+            {searchAplikasi && (
+              <button
+                onClick={() => setSearchAplikasi('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Application Cards Grid */}
+        {(() => {
+          const filteredApps = daftarMenuAplikasi.filter((app) => {
+            const matchKategori = kategoriAplikasiFilter === 'semua' || app.kategori === kategoriAplikasiFilter;
+            const matchSearch = !searchAplikasi.trim() || 
+              app.namaAplikasi.toLowerCase().includes(searchAplikasi.toLowerCase()) ||
+              (app.singkatan && app.singkatan.toLowerCase().includes(searchAplikasi.toLowerCase())) ||
+              app.deskripsi.toLowerCase().includes(searchAplikasi.toLowerCase()) ||
+              app.url.toLowerCase().includes(searchAplikasi.toLowerCase());
+            return matchKategori && matchSearch;
+          });
+
+          if (filteredApps.length === 0) {
+            return (
+              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+                <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                  <Globe className="w-7 h-7" />
+                </div>
+                <h4 className="font-bold text-sm text-slate-800 mb-1">Tidak ada menu aplikasi ditemukan</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+                  Coba ubah kata kunci pencarian atau pilih kategori lain untuk melihat daftar tautan aplikasi.
+                </p>
+                <button
+                  onClick={() => { setKategoriAplikasiFilter('semua'); setSearchAplikasi(''); }}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                >
+                  Reset Filter & Pencarian
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredApps.map((app) => {
+                const isMainPortal = app.kategori === 'portal_utama' || app.id === 'app-web-utama';
+                const cleanDomain = app.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+                const getBadgeColor = (kategori: string) => {
+                  switch (kategori) {
+                    case 'portal_utama': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                    case 'pendis': return 'bg-teal-100 text-teal-800 border-teal-200';
+                    case 'bimas_islam': return 'bg-cyan-100 text-cyan-800 border-cyan-200';
+                    case 'bimas_kristen': return 'bg-blue-100 text-blue-800 border-blue-200';
+                    case 'bimas_hindu': return 'bg-amber-100 text-amber-800 border-amber-200';
+                    case 'kepegawaian': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+                    case 'layanan_nasional': return 'bg-purple-100 text-purple-800 border-purple-200';
+                    default: return 'bg-slate-100 text-slate-800 border-slate-200';
+                  }
+                };
+
+                const getCategoryName = (kategori: string) => {
+                  switch (kategori) {
+                    case 'portal_utama': return 'Portal Web Utama';
+                    case 'pendis': return 'Pendidikan Islam';
+                    case 'bimas_islam': return 'Bimas Islam';
+                    case 'bimas_kristen': return 'Bimas Kristen';
+                    case 'bimas_hindu': return 'Bimas Hindu';
+                    case 'kepegawaian': return 'Kepegawaian ASN';
+                    case 'layanan_nasional': return 'Superapps Kemenag RI';
+                    default: return kategori;
+                  }
+                };
+
+                return (
+                  <div
+                    key={app.id}
+                    className={`rounded-2xl p-5 transition-all flex flex-col justify-between relative group hover:-translate-y-0.5 ${
+                      isMainPortal
+                        ? 'bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/60 border-2 border-emerald-500/80 shadow-md ring-4 ring-emerald-500/10'
+                        : 'bg-white hover:bg-slate-50/80 border border-slate-200 hover:border-teal-400 shadow-xs hover:shadow-md'
+                    }`}
+                  >
+                    {/* Top Ribbon for Web Utama */}
+                    {isMainPortal && (
+                      <div className="absolute -top-3 left-5 bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-[10px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md flex items-center gap-1 border border-emerald-400/40">
+                        <Sparkles className="w-3 h-3 text-amber-300" />
+                        Web Utama Resmi Kemenag
+                      </div>
+                    )}
+
+                    {/* Super Admin Direct Edit & Delete Buttons on Card */}
+                    {isSuperAdmin && (
+                      <div className="absolute top-3 right-3 flex items-center gap-1 z-10 bg-slate-900/85 backdrop-blur-xs p-1 rounded-lg border border-white/20 shadow-sm">
+                        <button
+                          onClick={(e) => handleOpenEditMenuAplikasi(app, e)}
+                          className="p-1 rounded-md text-teal-300 hover:bg-white/20 transition-colors"
+                          title="Super Admin: Edit Menu Aplikasi"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => handleConfirmDelete('menu_aplikasi', app.id, app.namaAplikasi, e)}
+                          className="p-1 rounded-md text-rose-400 hover:bg-white/20 transition-colors"
+                          title="Super Admin: Hapus Menu Aplikasi"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    <div>
+                      {/* Card Header */}
+                      <div className="flex items-start gap-3.5 mb-3.5 pt-1">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+                          isMainPortal 
+                            ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white ring-2 ring-emerald-300/40' 
+                            : 'bg-slate-900 text-emerald-400'
+                        }`}>
+                          {renderAppIcon(app.ikon)}
+                        </div>
+
+                        <div className="flex-1 pr-14">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getBadgeColor(app.kategori)}`}>
+                              {getCategoryName(app.kategori)}
+                            </span>
+                            {app.singkatan && (
+                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono">
+                                {app.singkatan}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-black text-sm sm:text-base text-slate-900 mt-1 leading-snug group-hover:text-teal-700 transition-colors line-clamp-2">
+                            {app.namaAplikasi}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Badge Text pill */}
+                      {app.badgeText && (
+                        <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md mb-2">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>{app.badgeText}</span>
+                        </div>
+                      )}
+
+                      {/* Description */}
+                      <p className="text-xs text-slate-600 leading-relaxed mb-3 line-clamp-3">
+                        {app.deskripsi}
+                      </p>
+
+                      {/* Domain URL indicator */}
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono bg-slate-50 border border-slate-200/80 px-2.5 py-1.5 rounded-xl mb-4">
+                        <LinkIcon className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate">{cleanDomain}</span>
+                      </div>
+                    </div>
+
+                    {/* Card Action Link Button */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="font-medium">Online & Aktif</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPortalWeb(app)}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                          isMainPortal
+                            ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-emerald-700/20'
+                            : 'bg-teal-700 hover:bg-teal-800 text-white'
+                        }`}
+                      >
+                        <span>Buka Laman Web</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </section>
+
+      {/* 4. KATALOG PTSP KEMENAG MURA (PERSYARATAN 1 & LANGSUNG EDIT SUPER ADMIN) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-16">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
@@ -254,13 +976,27 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
             </p>
           </div>
 
-          {/* Biaya Rp 0 Badge */}
-          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <div className="text-xs">
-              <p className="font-bold text-emerald-950">Biaya Layanan: Rp 0,- (GRATIS)</p>
-              <p className="text-emerald-700">Komitmen Wilayah Bebas dari Korupsi (WBK)</p>
+          <div className="flex items-center gap-3">
+            {/* Biaya Rp 0 Badge */}
+            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div className="text-xs">
+                <p className="font-bold text-emerald-950">Biaya Layanan: Rp 0,- (GRATIS)</p>
+                <p className="text-emerald-700">Komitmen Wilayah Bebas dari Korupsi (WBK)</p>
+              </div>
             </div>
+
+            {/* Direct Super Admin Add Service Button */}
+            {isSuperAdmin && (
+              <button
+                onClick={() => handleOpenAddLayanan()}
+                className="px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer shrink-0 transition-all ring-2 ring-purple-300"
+                title="Super Admin: Tambah Layanan Baru ke Katalog Beranda"
+              >
+                <Plus className="w-4 h-4 text-amber-300" />
+                Tambah Layanan
+              </button>
+            )}
           </div>
         </div>
 
@@ -274,7 +1010,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                 : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
             }`}
           >
-            Semua Layanan ({KATALOG_LAYANAN.length})
+            Semua Layanan ({katalogLayanan.length})
           </button>
 
           <button
@@ -351,7 +1087,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                   <span className="text-[10px] font-extrabold bg-amber-400 text-emerald-950 px-2 py-0.2 rounded-full">Baru</span>
                 </h4>
                 <p className="text-xs text-emerald-200">
-                  Akses langsung pangkalan data madrasah, pesantren, dan pendidik PAI se-Kabupaten Musi Rawas.
+                  Akses langsung pangkalan data madrasah, pesantren, dan pendidik PAI se-Kabupaten Murung Raya.
                 </p>
               </div>
             </div>
@@ -373,17 +1109,40 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
             return (
               <div 
                 key={lay.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group hover:border-emerald-400"
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group hover:border-emerald-400 relative"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                       {lay.kode}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
-                      {getSeksiIcon(lay.seksi)}
-                      {seksiInfo.singkatan}
-                    </span>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+                        {getSeksiIcon(lay.seksi)}
+                        {seksiInfo.singkatan}
+                      </span>
+
+                      {/* Super Admin Direct Edit & Delete Buttons on Card */}
+                      {isSuperAdmin && (
+                        <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-200">
+                          <button
+                            onClick={(e) => handleOpenEditLayanan(lay, e)}
+                            className="p-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-900 transition-colors cursor-pointer"
+                            title="Super Admin: Edit Layanan ini"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => handleConfirmDelete('layanan', lay.id, lay.namaLayanan, e)}
+                            className="p-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-900 transition-colors cursor-pointer"
+                            title="Super Admin: Hapus Layanan ini"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 mb-2 group-hover:text-emerald-800 transition-colors">
@@ -429,29 +1188,41 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       </section>
 
-      {/* 4. BERITA TERKINI KEMENAG MURA (PERSYARATAN 1) */}
+      {/* 4. BERITA TERKINI KEMENAG MURA (PERSYARATAN 1 & LANGSUNG EDIT SUPER ADMIN) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-20">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">
               <BookOpen className="w-4 h-4" />
               Pemberitaan Resmi
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Berita Terkini Kemenag Musi Rawas
+              Berita Terkini {pengaturanWeb.namaKantor}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
-              Informasi agenda kerja, inovasi layanan, dan perkembangan keagamaan di Kabupaten Musi Rawas.
+              Informasi agenda kerja, inovasi layanan, dan perkembangan keagamaan di {pengaturanWeb.kabupaten}.
             </p>
           </div>
+
+          {/* Direct Super Admin Add News Button */}
+          {isSuperAdmin && (
+            <button
+              onClick={() => handleOpenAddBerita()}
+              className="px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer shrink-0 transition-all ring-2 ring-blue-300"
+              title="Super Admin: Tulis & Publikasikan Berita Baru"
+            >
+              <Plus className="w-4 h-4 text-amber-300" />
+              Tulis Berita Baru
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {BERITA_TERKINI.slice(0, 3).map((berita) => (
+          {daftarBerita.slice(0, 6).map((berita) => (
             <div 
               key={berita.id}
               onClick={() => setSelectedBerita(berita)}
-              className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between cursor-pointer group"
+              className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between cursor-pointer group relative"
             >
               <div>
                 <div className="relative h-44 overflow-hidden bg-slate-100">
@@ -463,6 +1234,29 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                   <span className="absolute top-3 left-3 bg-emerald-900/90 text-white font-bold text-[10px] px-2.5 py-1 rounded-md backdrop-blur-xs">
                     {berita.kategori}
                   </span>
+
+                  {/* Super Admin Direct Edit & Delete Buttons on News Card */}
+                  {isSuperAdmin && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-xs p-1 rounded-lg border border-white/20"
+                    >
+                      <button
+                        onClick={(e) => handleOpenEditBerita(berita, e)}
+                        className="p-1 rounded-md bg-white/20 text-white hover:bg-blue-600 transition-colors"
+                        title="Super Admin: Edit Berita"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleConfirmDelete('berita', berita.id, berita.judul, e)}
+                        className="p-1 rounded-md bg-white/20 text-white hover:bg-rose-600 transition-colors"
+                        title="Super Admin: Hapus Berita"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4">
@@ -493,35 +1287,69 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       </section>
 
-      {/* 5. DATA KEPALA KANTOR KEMENAG MURA DARI PERTAMA SAMPAI TERBARU (PERSYARATAN 1) */}
+      {/* 5. DATA KEPALA KANTOR DARI PERTAMA SAMPAI TERBARU (PERSYARATAN 1 & LANGSUNG EDIT SUPER ADMIN) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-20">
         <div className="bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 rounded-3xl p-6 sm:p-10 text-white shadow-2xl border border-emerald-800/40">
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold mb-3">
-              <Award className="w-4 h-4 text-amber-400" />
-              Historis Kepemimpinan Kantor Kemenag Kabupaten Musi Rawas
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-white/10">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold mb-3">
+                <Award className="w-4 h-4 text-amber-400" />
+                Historis Kepemimpinan {pengaturanWeb.namaKantor}
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
+                Daftar Kepala Kantor dari Pertama Sampai Terbaru
+              </h2>
+              <p className="text-xs sm:text-sm text-emerald-200 max-w-2xl">
+                Jejak pengabdian pimpinan {pengaturanWeb.namaKantor} dalam membina kerukunan umat dan memajukan pendidikan keagamaan di {pengaturanWeb.kabupaten}.
+              </p>
             </div>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
-              Daftar Kepala Kantor dari Pertama Sampai Terbaru
-            </h2>
-            <p className="text-xs sm:text-sm text-emerald-200">
-              Jejak pengabdian pimpinan Kantor Kementerian Agama Kabupaten Musi Rawas dalam membina kerukunan umat dan memajukan pendidikan keagamaan sejak tahun 1968.
-            </p>
+
+            {/* Direct Super Admin Add Kepala Kantor Button */}
+            {isSuperAdmin && (
+              <button
+                onClick={() => handleOpenAddKepalaKantor()}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-emerald-950 font-black text-xs rounded-xl shadow-lg flex items-center gap-1.5 cursor-pointer shrink-0 transition-all ring-2 ring-amber-300"
+                title="Super Admin: Tambah Riwayat Kepala Kantor Baru"
+              >
+                <Plus className="w-4 h-4" />
+                Tambah Riwayat Kakan
+              </button>
+            )}
           </div>
 
-          {/* Leaders Carousel/Grid */}
+          {/* Leaders Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {DATA_KEPALA_KANTOR.map((kakan) => {
+            {dataKepalaKantor.map((kakan) => {
               const isAktif = kakan.status === 'Menjabat (Aktif)';
               return (
                 <div 
                   key={kakan.id}
-                  className={`rounded-2xl p-4 transition-all flex flex-col justify-between ${
+                  className={`rounded-2xl p-4 transition-all flex flex-col justify-between relative group ${
                     isAktif 
                       ? 'bg-linear-to-b from-emerald-800/90 to-emerald-950/90 border-2 border-amber-400/80 ring-4 ring-amber-400/10 shadow-xl' 
                       : 'bg-white/5 hover:bg-white/10 border border-white/10'
                   }`}
                 >
+                  {/* Super Admin Direct Edit & Delete Buttons on Leader Card */}
+                  {isSuperAdmin && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 z-10 bg-slate-900/80 backdrop-blur-xs p-1 rounded-lg border border-white/20">
+                      <button
+                        onClick={(e) => handleOpenEditKepalaKantor(kakan, e)}
+                        className="p-1 rounded-md text-amber-300 hover:bg-white/20 transition-colors"
+                        title="Super Admin: Edit Data Kepala Kantor"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleConfirmDelete('kakan', kakan.id, kakan.nama, e)}
+                        className="p-1 rounded-md text-rose-400 hover:bg-white/20 transition-colors"
+                        title="Super Admin: Hapus Data Kepala Kantor"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
                   <div>
                     {/* Head photo and order badge */}
                     <div className="relative mb-3 flex items-center justify-center">
@@ -570,7 +1398,11 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       </section>
 
-      {/* 6. DETAIL PERSYARATAN MODAL */}
+      {/* ========================================================
+          MODALS SECTION
+          ======================================================== */}
+
+      {/* 6. DETAIL PERSYARATAN MODAL (PUBLIC) */}
       {selectedDetailLayanan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200">
@@ -652,7 +1484,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       )}
 
-      {/* 7. FULL BERITA MODAL */}
+      {/* 7. FULL BERITA MODAL (PUBLIC) */}
       {selectedBerita && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 max-h-[85vh] flex flex-col">
@@ -690,7 +1522,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                 <p className="font-semibold text-slate-800">{selectedBerita.ringkasan}</p>
                 <p>{selectedBerita.isiLengkap}</p>
                 <p>
-                  Kantor Kementerian Agama Kabupaten Musi Rawas terus berkomitmen memberikan keterbukaan informasi publik dan mewujudkan Wilayah Bebas dari Korupsi (WBK) serta Wilayah Birokrasi Bersih dan Melayani (WBBM) bagi segenap masyarakat Kabupaten Musi Rawas.
+                  {pengaturanWeb.namaKantor} terus berkomitmen memberikan keterbukaan informasi publik dan mewujudkan Wilayah Bebas dari Korupsi (WBK) serta Wilayah Birokrasi Bersih dan Melayani (WBBM) bagi segenap masyarakat {pengaturanWeb.kabupaten}.
                 </p>
               </div>
             </div>
@@ -705,6 +1537,781 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* 8. MODAL SUPER ADMIN: TAMBAH / EDIT LAYANAN */}
+      {layananModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 my-auto">
+            <div className="bg-purple-900 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Crown className="w-5 h-5 text-amber-400" />
+                <h3 className="font-bold text-base text-white">
+                  {editingLayanan ? 'Edit Layanan PTSP (Super Admin)' : 'Tambah Layanan PTSP Baru'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setLayananModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLayanan} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kode Layanan *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={layananForm.kode || ''}
+                    onChange={(e) => setLayananForm({ ...layananForm, kode: e.target.value.toUpperCase() })}
+                    placeholder="Contoh: LAY-101"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 font-mono focus:border-purple-600 outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Seksi Penanggung Jawab *
+                  </label>
+                  <select
+                    value={layananForm.seksi || 'pendis'}
+                    onChange={(e) => setLayananForm({ ...layananForm, seksi: e.target.value as SeksiType })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-purple-600 outline-hidden"
+                  >
+                    <option value="pendis">Seksi Pendidikan Islam (Pendis)</option>
+                    <option value="bimas_islam">Seksi Bimas Islam</option>
+                    <option value="bimas_kristen">Penyelenggara Bimas Kristen</option>
+                    <option value="bimas_hindu">Penyelenggara Bimas Hindu</option>
+                    <option value="kepegawaian">Subbag Tata Usaha (Kepegawaian)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nama Layanan *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={layananForm.namaLayanan || ''}
+                  onChange={(e) => setLayananForm({ ...layananForm, namaLayanan: e.target.value })}
+                  placeholder="Contoh: Rekomendasi Pendirian Madrasah Diniyah Takmiliyah"
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-purple-600 outline-hidden font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Deskripsi Singkat Layanan
+                </label>
+                <textarea
+                  rows={2}
+                  value={layananForm.deskripsi || ''}
+                  onChange={(e) => setLayananForm({ ...layananForm, deskripsi: e.target.value })}
+                  placeholder="Uraian ringkas tentang tujuan dan cakupan layanan ini..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-purple-600 outline-hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Estimasi Waktu Proses (Hari Kerja) *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    required
+                    value={layananForm.estimasiHari ?? 3}
+                    onChange={(e) => setLayananForm({ ...layananForm, estimasiHari: parseInt(e.target.value) || 1 })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-purple-600 outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Biaya Retribusi (Rp)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={layananForm.biaya ?? 0}
+                    onChange={(e) => setLayananForm({ ...layananForm, biaya: parseInt(e.target.value) || 0 })}
+                    placeholder="0 = Gratis"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-purple-600 outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Dasar Hukum
+                  </label>
+                  <input
+                    type="text"
+                    value={layananForm.dasarHukum || ''}
+                    onChange={(e) => setLayananForm({ ...layananForm, dasarHukum: e.target.value })}
+                    placeholder="PMA RI No. 34 Tahun 2016"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-purple-600 outline-hidden font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Keluaran Dokumen (Output)
+                  </label>
+                  <input
+                    type="text"
+                    value={layananForm.outputDokumen || ''}
+                    onChange={(e) => setLayananForm({ ...layananForm, outputDokumen: e.target.value })}
+                    placeholder="Surat Rekomendasi Resmi TTE BSrE"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-purple-600 outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Requirement Documents List Editor */}
+              <div className="pt-2 border-t border-slate-100">
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  Daftar Dokumen Persyaratan Berkas
+                </label>
+                <div className="space-y-1.5 mb-3">
+                  {(layananForm.dokumenSyarat || []).map((syarat, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                      <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-900 font-bold text-[10px] flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </span>
+                      <span className="flex-1 text-slate-800">{syarat}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSyaratRow(idx)}
+                        className="text-rose-600 hover:text-rose-800 p-1 cursor-pointer"
+                        title="Hapus persyaratan ini"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newSyaratInput}
+                    onChange={(e) => setNewSyaratInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddSyaratRow();
+                      }
+                    }}
+                    placeholder="Ketik persyaratan baru lalu tekan Tambah..."
+                    className="flex-1 text-xs p-2 rounded-xl border border-slate-200 focus:border-purple-600 outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSyaratRow}
+                    className="px-3 py-2 bg-purple-100 text-purple-900 hover:bg-purple-200 font-bold text-xs rounded-xl cursor-pointer"
+                  >
+                    + Tambah Syarat
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLayananModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-purple-800 hover:bg-purple-900 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  {editingLayanan ? 'Simpan Perubahan Layanan' : 'Publikasikan Layanan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 9. MODAL SUPER ADMIN: TAMBAH / EDIT BERITA */}
+      {beritaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 my-auto">
+            <div className="bg-blue-900 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-amber-400" />
+                <h3 className="font-bold text-base text-white">
+                  {editingBerita ? 'Edit Berita Resmi (Super Admin)' : 'Tulis Berita Baru'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setBeritaModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBerita} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Judul Berita *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={beritaForm.judul || ''}
+                  onChange={(e) => setBeritaForm({ ...beritaForm, judul: e.target.value })}
+                  placeholder="Ketik judul berita yang menarik dan informatif..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-blue-600 outline-hidden font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kategori Berita *
+                  </label>
+                  <select
+                    value={beritaForm.kategori || 'PTSP & Layanan'}
+                    onChange={(e) => setBeritaForm({ ...beritaForm, kategori: e.target.value as any })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-blue-600 outline-hidden"
+                  >
+                    <option value="PTSP & Layanan">PTSP & Layanan</option>
+                    <option value="Pendidikan">Pendidikan (Pendis)</option>
+                    <option value="Bimas Islam">Bimas Islam</option>
+                    <option value="Kerukunan Umat">Kerukunan Umat (Kristen & Hindu)</option>
+                    <option value="Kepegawaian">Kepegawaian & Tata Usaha</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Penulis / Rilis Humas *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={beritaForm.penulis || ''}
+                    onChange={(e) => setBeritaForm({ ...beritaForm, penulis: e.target.value })}
+                    placeholder="Humas Kemenag Murung Raya"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-blue-600 outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  URL Gambar Utama Berita
+                </label>
+                <input
+                  type="url"
+                  value={beritaForm.gambarUrl || ''}
+                  onChange={(e) => setBeritaForm({ ...beritaForm, gambarUrl: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-blue-600 outline-hidden font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Ringkasan Berita (Lead Paragraph) *
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={beritaForm.ringkasan || ''}
+                  onChange={(e) => setBeritaForm({ ...beritaForm, ringkasan: e.target.value })}
+                  placeholder="Ringkasan singkat isi berita untuk ditampilkan di kartu Beranda..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-blue-600 outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Isi Lengkap Berita *
+                </label>
+                <textarea
+                  rows={5}
+                  required
+                  value={beritaForm.isiLengkap || ''}
+                  onChange={(e) => setBeritaForm({ ...beritaForm, isiLengkap: e.target.value })}
+                  placeholder="Tuliskan berita lengkap secara jelas dan komprehensif..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-blue-600 outline-hidden leading-relaxed"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBeritaModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  {editingBerita ? 'Simpan Perubahan Berita' : 'Terbitkan Berita'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 10. MODAL SUPER ADMIN: TAMBAH / EDIT KEPALA KANTOR */}
+      {kkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 my-auto">
+            <div className="bg-amber-600 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-200" />
+                <h3 className="font-bold text-base text-white">
+                  {editingKK ? 'Edit Riwayat Kepala Kantor' : 'Tambah Riwayat Kepala Kantor Baru'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setKkModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveKepalaKantor} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Urutan Kepala Kantor Ke- *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={kkForm.urutan ?? 1}
+                    onChange={(e) => setKkForm({ ...kkForm, urutan: parseInt(e.target.value) || 1 })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden font-bold"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Nama Lengkap (tanpa gelar) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={kkForm.nama || ''}
+                    onChange={(e) => setKkForm({ ...kkForm, nama: e.target.value })}
+                    placeholder="Contoh: H. Syamsuddin"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Gelar Akademik
+                  </label>
+                  <input
+                    type="text"
+                    value={kkForm.gelar || ''}
+                    onChange={(e) => setKkForm({ ...kkForm, gelar: e.target.value })}
+                    placeholder="Contoh: S.Ag., M.Pd.I"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    NIP Pejabat
+                  </label>
+                  <input
+                    type="text"
+                    value={kkForm.nip || ''}
+                    onChange={(e) => setKkForm({ ...kkForm, nip: e.target.value })}
+                    placeholder="19750101 200003 1 001"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Periode (Label) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={kkForm.periode || ''}
+                    onChange={(e) => setKkForm({ ...kkForm, periode: e.target.value })}
+                    placeholder="Contoh: 2024 - Sekarang"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Tahun Mulai *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={kkForm.tahunMulai ?? 2024}
+                    onChange={(e) => setKkForm({ ...kkForm, tahunMulai: parseInt(e.target.value) || 2024 })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Status Jabatan *
+                  </label>
+                  <select
+                    value={kkForm.status || 'Purna Bakti'}
+                    onChange={(e) => setKkForm({ ...kkForm, status: e.target.value as any })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden font-semibold"
+                  >
+                    <option value="Menjabat (Aktif)">Menjabat (Aktif)</option>
+                    <option value="Purna Bakti">Purna Bakti</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  URL Foto Profil
+                </label>
+                <input
+                  type="url"
+                  value={kkForm.fotoUrl || ''}
+                  onChange={(e) => setKkForm({ ...kkForm, fotoUrl: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Prestasi / Catatan Pengabdian Kepemimpinan
+                </label>
+                <textarea
+                  rows={3}
+                  value={kkForm.prestasi || ''}
+                  onChange={(e) => setKkForm({ ...kkForm, prestasi: e.target.value })}
+                  placeholder="Inovasi utama, pembangunan sarana, atau pencapaian zona integritas..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-amber-600 outline-hidden"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setKkModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  {editingKK ? 'Simpan Riwayat Kakan' : 'Tambahkan Pejabat'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 11. MODAL TAMBAH / EDIT MENU APLIKASI WEB (SUPER ADMIN) */}
+      {menuAplikasiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 my-8">
+            <div className="bg-linear-to-r from-teal-900 via-teal-800 to-emerald-900 p-5 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-teal-200 border border-white/20">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-white">
+                    {editingMenuAplikasi ? 'Edit Menu Aplikasi & Portal Web' : 'Tambah Menu Aplikasi / Web Utama'}
+                  </h3>
+                  <p className="text-xs text-teal-200">
+                    Kelola tautan portal web utama atau sistem informasi sektoral yang tampil pada kartu di Beranda PTSP.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setMenuAplikasiModalOpen(false)}
+                className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMenuAplikasi} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nama Aplikasi / Portal Web *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={menuAplikasiForm.namaAplikasi || ''}
+                  onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, namaAplikasi: e.target.value })}
+                  placeholder="Contoh: Portal Web Utama Kemenag Kab. Murung Raya"
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Singkatan / Kode Singkat
+                  </label>
+                  <input
+                    type="text"
+                    value={menuAplikasiForm.singkatan || ''}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, singkatan: e.target.value })}
+                    placeholder="Contoh: WEB UTAMA, SIPENDIS, SIMAS"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-mono uppercase"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kategori Sektor / Layanan *
+                  </label>
+                  <select
+                    value={menuAplikasiForm.kategori || 'portal_utama'}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, kategori: e.target.value })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-semibold"
+                  >
+                    <option value="portal_utama">Portal Web Utama & Daerah</option>
+                    <option value="pendis">Seksi Pendidikan Islam (Pendis)</option>
+                    <option value="bimas_islam">Seksi Bimas Islam (KUA & Kemasjidan)</option>
+                    <option value="bimas_kristen">Penyelenggara Bimas Kristen</option>
+                    <option value="bimas_hindu">Penyelenggara Bimas Hindu</option>
+                    <option value="kepegawaian">Subbag TU & Kepegawaian</option>
+                    <option value="layanan_nasional">Layanan Nasional / Kemenag RI</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  URL / Tautan Website Lengkap *
+                </label>
+                <div className="relative">
+                  <LinkIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="url"
+                    required
+                    value={menuAplikasiForm.url || ''}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, url: e.target.value })}
+                    placeholder="https://murungraya.kemenag.go.id atau https://sipendismura.my.id"
+                    className="w-full text-xs pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-mono text-teal-800 font-bold"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Pastikan diawali dengan https:// atau http:// agar pemohon dapat langsung mengklik dan membuka situs.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Badge / Label Unggulan
+                  </label>
+                  <input
+                    type="text"
+                    value={menuAplikasiForm.badgeText || ''}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, badgeText: e.target.value })}
+                    placeholder="Contoh: Portal Resmi Kemenag"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Pilihan Ikon Tampilan
+                  </label>
+                  <select
+                    value={menuAplikasiForm.ikon || 'Globe'}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, ikon: e.target.value })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-semibold"
+                  >
+                    <option value="Globe">Globe (Web / Portal Umum)</option>
+                    <option value="GraduationCap">GraduationCap (Pendidikan / Madrasah)</option>
+                    <option value="Building2">Building2 (Kemasjidan / Kantor)</option>
+                    <option value="Users">Users (Layanan Nikah / Masyarakat)</option>
+                    <option value="Landmark">Landmark (Wakaf / Lembaga Keagamaan)</option>
+                    <option value="Flame">Flame (Bimas Hindu)</option>
+                    <option value="ShieldCheck">ShieldCheck (Kepegawaian / Keamanan)</option>
+                    <option value="Sparkles">Sparkles (Superapps / Inovasi)</option>
+                    <option value="BookOpen">BookOpen (Buku Pedoman / Regulasi)</option>
+                    <option value="Compass">Compass (Navigasi Portal)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Pilihan Warna Tema Kartu
+                  </label>
+                  <select
+                    value={menuAplikasiForm.warnaTema || 'emerald'}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, warnaTema: e.target.value as any })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-semibold"
+                  >
+                    <option value="emerald">Emerald (Hijau Resmi Kemenag)</option>
+                    <option value="teal">Teal (Hijau Toska)</option>
+                    <option value="blue">Blue (Biru Profesional)</option>
+                    <option value="indigo">Indigo (Ungu Tua / ASN)</option>
+                    <option value="amber">Amber (Kuning Emas)</option>
+                    <option value="purple">Purple (Ungu Superapps)</option>
+                    <option value="rose">Rose (Merah Muda)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Urutan Tampilan
+                  </label>
+                  <input
+                    type="number"
+                    value={menuAplikasiForm.urutan ?? 1}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, urutan: parseInt(e.target.value) || 1 })}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Deskripsi Lengkap Aplikasi & Layanan
+                </label>
+                <textarea
+                  rows={3}
+                  value={menuAplikasiForm.deskripsi || ''}
+                  onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, deskripsi: e.target.value })}
+                  placeholder="Jelaskan secara singkat kegunaan atau target layanan dari portal/aplikasi ini..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden leading-relaxed"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-6 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={menuAplikasiForm.statusAktif !== false}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, statusAktif: e.target.checked })}
+                    className="w-4 h-4 text-teal-600 rounded-sm"
+                  />
+                  <span>Tampilkan di Beranda (Status Aktif)</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={menuAplikasiForm.bukaTabBaru !== false}
+                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, bukaTabBaru: e.target.checked })}
+                    className="w-4 h-4 text-teal-600 rounded-sm"
+                  />
+                  <span>Buka di Tab Baru (_blank)</span>
+                </label>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMenuAplikasiModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  {editingMenuAplikasi ? 'Simpan Perubahan Aplikasi' : 'Tambahkan Menu Aplikasi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 12. MODAL KONFIRMASI HAPUS (SUPER ADMIN) */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <h3 className="font-bold text-base text-slate-900 mb-2">
+              Konfirmasi Hapus Data
+            </h3>
+
+            <p className="text-xs text-slate-600 leading-relaxed mb-6">
+              Apakah Anda yakin ingin menghapus data{' '}
+              <span className="font-bold text-slate-900">"{deleteConfirm.title}"</span> dari sistem? 
+              Tindakan ini tidak dapat dibatalkan.
+            </p>
+
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+              >
+                Batalkan
+              </button>
+              <button
+                onClick={handleExecuteDelete}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                Ya, Hapus Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 13. MODAL VIEWER WEB UTAMA & SIPENDIS MURA (AUTO RETURN TO BERANDA PTSP) */}
+      {portalViewerData && (
+        <WebPortalViewerModal
+          isOpen={portalViewerData.isOpen}
+          url={portalViewerData.url}
+          title={portalViewerData.title}
+          singkatan={portalViewerData.singkatan}
+          onClose={() => setPortalViewerData(null)}
+          onReturnToBeranda={handleReturnToBerandaFromPortal}
+        />
       )}
     </div>
   );

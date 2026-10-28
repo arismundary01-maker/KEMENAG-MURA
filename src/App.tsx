@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PTSPProvider, usePTSP } from './context/PTSPContext';
 import { Header } from './components/common/Header';
 import { BerandaPortal } from './components/public/BerandaPortal';
@@ -11,11 +11,13 @@ import { OperatorPTSPView } from './components/operator/OperatorPTSPView';
 import { SeksiDashboardView } from './components/seksi/SeksiDashboardView';
 import { PimpinanTTEView } from './components/kakan/PimpinanTTEView';
 import { TrackingView } from './components/public/TrackingView';
+import { SuperAdminPortal } from './components/admin/SuperAdminPortal';
 import { PermohonanFormModal } from './components/public/PermohonanFormModal';
 import { OfficialDocumentModal } from './components/document/OfficialDocumentModal';
 import { ReceiptSlipModal } from './components/document/ReceiptSlipModal';
 import { TTEValidatorModal } from './components/public/TTEValidatorModal';
 import { WhatsAppAlertToast } from './components/common/WhatsAppAlertToast';
+import { LoginInternalModal } from './components/common/LoginInternalModal';
 import { LayananKatalog, Permohonan } from './types/ptsp';
 import { 
   Building2, 
@@ -24,18 +26,57 @@ import {
   MapPin, 
   ShieldCheck, 
   Heart, 
-  ExternalLink 
+  ExternalLink,
+  Crown,
+  Lock,
+  LogOut
 } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { activeView, setActiveView } = usePTSP();
+  const { currentRole, setCurrentRole, activeView, setActiveView, pengaturanWeb } = usePTSP();
 
   // Modal states
   const [isPermohonanModalOpen, setIsPermohonanModalOpen] = useState(false);
   const [selectedPresetLayanan, setSelectedPresetLayanan] = useState<LayananKatalog | null>(null);
   const [isValidatorModalOpen, setIsValidatorModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [printedReceiptPermohonan, setPrintedReceiptPermohonan] = useState<Permohonan | null>(null);
   const [previewDocumentPermohonan, setPreviewDocumentPermohonan] = useState<Permohonan | null>(null);
+
+  // Requirement 2: Ketika pengguna publik mengakses web utama resmi kemenag dan masuk web si-pendismura, kemudian pada saat kembali secara otomatis menuju beranda ptsp
+  useEffect(() => {
+    const handleReturnToBeranda = () => {
+      const returnFlag = sessionStorage.getItem('kemenag_return_to_beranda_on_focus');
+      if (returnFlag === 'true') {
+        sessionStorage.removeItem('kemenag_return_to_beranda_on_focus');
+        setActiveView('public_portal');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    window.addEventListener('focus', handleReturnToBeranda);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        handleReturnToBeranda();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleReturnToBeranda);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [setActiveView]);
+
+  // Requirement 1: Ketika pengguna publik mengakses aplikasi, amankan dan sembunyikan dashboard internal
+  useEffect(() => {
+    if (currentRole === 'pemohon') {
+      const internalViews = ['operator_portal', 'seksi_dashboard', 'kakan_tte', 'super_admin_portal'];
+      if (internalViews.includes(activeView)) {
+        setActiveView('public_portal');
+      }
+    }
+  }, [currentRole, activeView, setActiveView]);
 
   const handleOpenPermohonan = (layananPreset?: LayananKatalog) => {
     setSelectedPresetLayanan(layananPreset || null);
@@ -86,6 +127,10 @@ const MainAppContent: React.FC = () => {
             onOpenValidatorModal={() => setIsValidatorModalOpen(true)}
           />
         )}
+
+        {activeView === 'super_admin_portal' && (
+          <SuperAdminPortal />
+        )}
       </main>
 
       {/* 3. Official Government Footer */}
@@ -100,7 +145,7 @@ const MainAppContent: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="font-black text-sm tracking-tight uppercase text-white">
-                    KANTOR KEMENTERIAN AGAMA KABUPATEN MUSI RAWAS
+                    {pengaturanWeb.namaKantor}
                   </h4>
                   <p className="text-xs text-emerald-300">
                     Sistem Pelayanan Terpadu Satu Pintu (PTSP) & TTE BSrE Online
@@ -109,21 +154,21 @@ const MainAppContent: React.FC = () => {
               </div>
 
               <p className="text-xs text-emerald-100/80 leading-relaxed max-w-lg">
-                Melayani masyarakat Kabupaten Musi Rawas dengan prinsip Ikhlas Beramal dan BerAKHLAK (Berorientasi Pelayanan, Akuntabel, Kompeten, Harmonis, Loyal, Adaptif, dan Kolaboratif) menuju Zona Integritas WBK/WBBM.
+                Melayani masyarakat {pengaturanWeb.kabupaten} dengan prinsip "{pengaturanWeb.slogan}" dan BerAKHLAK (Berorientasi Pelayanan, Akuntabel, Kompeten, Harmonis, Loyal, Adaptif, dan Kolaboratif) menuju Zona Integritas WBK/WBBM.
               </p>
 
               <div className="pt-2 text-xs text-emerald-200/90 space-y-1">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Komplek Perkantoran Pemkab Musi Rawas, Muara Beliti, Kab. Musi Rawas, Sumatera Selatan 31661</span>
+                  <span>{pengaturanWeb.alamatLengkap}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>(0733) 4540112 • Call Center PTSP: 0812-7384-9921</span>
+                  <span>{pengaturanWeb.telepon} • Call Center PTSP</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>ptsp.kemenagmura@kemenag.go.id</span>
+                  <span>{pengaturanWeb.email}</span>
                 </div>
               </div>
             </div>
@@ -135,30 +180,81 @@ const MainAppContent: React.FC = () => {
               </h5>
               <ul className="space-y-2 text-xs text-emerald-100/90">
                 <li>
-                  <button onClick={() => setActiveView('public_portal')} className="hover:text-amber-300 transition-colors">
+                  <button onClick={() => setActiveView('public_portal')} className="hover:text-amber-300 transition-colors cursor-pointer">
                     Beranda & Katalog Layanan
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => handleOpenPermohonan()} className="hover:text-amber-300 transition-colors">
+                  <button onClick={() => handleOpenPermohonan()} className="hover:text-amber-300 transition-colors cursor-pointer">
                     Pengajuan Permohonan Mandiri
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => setActiveView('tracking_view')} className="hover:text-amber-300 transition-colors">
+                  <button onClick={() => setActiveView('tracking_view')} className="hover:text-amber-300 transition-colors cursor-pointer">
                     Pelacakan Status Resi Online
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => setActiveView('operator_portal')} className="hover:text-amber-300 transition-colors">
-                    Portal Operator PTSP
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setIsValidatorModalOpen(true)} className="hover:text-amber-300 transition-colors">
+                  <button onClick={() => setIsValidatorModalOpen(true)} className="hover:text-amber-300 transition-colors cursor-pointer">
                     Validasi Sertifikat TTE BSrE
                   </button>
                 </li>
+
+                {/* Sembunyikan menu operator, seksi, persetujuan untuk pengguna publik */}
+                {currentRole === 'pemohon' ? (
+                  <li className="pt-2 border-t border-emerald-900">
+                    <button
+                      onClick={() => setIsLoginModalOpen(true)}
+                      className="text-amber-300 hover:text-white font-bold flex items-center gap-1.5 bg-emerald-900/60 hover:bg-emerald-800/80 px-2.5 py-1.5 rounded-lg border border-amber-400/30 transition-all cursor-pointer"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-amber-400" />
+                      Login Petugas & ASN PTSP
+                    </button>
+                  </li>
+                ) : (
+                  <>
+                    <li className="pt-2 border-t border-emerald-900">
+                      <div className="text-[10px] uppercase font-bold text-emerald-400 mb-1">
+                        Portal Internal Dinas:
+                      </div>
+                    </li>
+                    <li>
+                      <button onClick={() => setActiveView('operator_portal')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                        Portal Operator PTSP
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => setActiveView('seksi_dashboard')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                        Dashboard Seksi & Integrasi
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => setActiveView('kakan_tte')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                        Persetujuan & TTE BSrE
+                      </button>
+                    </li>
+                    {currentRole === 'super_admin' && (
+                      <li>
+                        <button onClick={() => setActiveView('super_admin_portal')} className="hover:text-amber-300 transition-colors text-amber-300 font-bold flex items-center gap-1 cursor-pointer">
+                          <Crown className="w-3 h-3 text-amber-400" />
+                          Menu Super Admin (Kelola Web)
+                        </button>
+                      </li>
+                    )}
+                    <li>
+                      <button
+                        onClick={() => {
+                          setCurrentRole('pemohon');
+                          setActiveView('public_portal');
+                        }}
+                        className="text-rose-300 hover:text-rose-100 flex items-center gap-1 cursor-pointer text-[11px]"
+                      >
+                        <LogOut className="w-3 h-3" />
+                        Keluar ke Mode Publik
+                      </button>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
 
@@ -183,9 +279,9 @@ const MainAppContent: React.FC = () => {
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-emerald-300">
-            <p>© {new Date().getFullYear()} Kantor Kementerian Agama Kabupaten Musi Rawas. Hak Cipta Dilindungi Undang-Undang.</p>
+            <p>© {new Date().getFullYear()} {pengaturanWeb.namaKantor}. Hak Cipta Dilindungi Undang-Undang.</p>
             <p className="flex items-center gap-1">
-              PTSP Digital Kemenag Mura • <span className="text-amber-300 font-semibold">Ikhlas Beramal</span>
+              PTSP Digital {pengaturanWeb.singkatanKantor} • <span className="text-amber-300 font-semibold">{pengaturanWeb.slogan}</span>
             </p>
           </div>
         </div>
@@ -211,6 +307,12 @@ const MainAppContent: React.FC = () => {
       <TTEValidatorModal
         isOpen={isValidatorModalOpen}
         onClose={() => setIsValidatorModalOpen(false)}
+      />
+
+      {/* Login Petugas / ASN Modal */}
+      <LoginInternalModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
       />
 
       {/* 5. Real-Time WhatsApp Alert Simulation Toast */}

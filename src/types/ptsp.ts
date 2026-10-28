@@ -16,6 +16,7 @@ export type StatusPermohonan =
   | 'ditolak';           // Ditolak dengan alasan resmi
 
 export type UserRole = 
+  | 'super_admin'
   | 'pemohon' 
   | 'operator_ptsp' 
   | 'kasi_pendis' 
@@ -46,6 +47,10 @@ export interface LayananKatalog {
   dasarHukum: string;
   outputDokumen: string;
   dokumenSyarat: string[];
+  portalResmiUrl?: string;
+  namaPortalResmi?: string;
+  keteranganPortal?: string;
+  kategoriLembaga?: 'madrasah' | 'pontren' | 'lpq_mdt';
 }
 
 export interface HistoryStatus {
@@ -143,6 +148,21 @@ export interface AplikasiIntegrasi {
   fiturUtama: string[];
 }
 
+export interface MenuAplikasiWeb {
+  id: string;
+  namaAplikasi: string;
+  singkatan?: string;
+  kategori: 'portal_utama' | 'pendis' | 'bimas_islam' | 'bimas_kristen' | 'bimas_hindu' | 'kepegawaian' | 'layanan_nasional' | string;
+  deskripsi: string;
+  url: string;
+  badgeText?: string;
+  warnaTema?: 'emerald' | 'blue' | 'teal' | 'indigo' | 'amber' | 'purple' | 'rose' | string;
+  ikon?: string;
+  statusAktif: boolean;
+  bukaTabBaru?: boolean;
+  urutan?: number;
+}
+
 export interface KepalaKantorHistory {
   id: string;
   urutan: number;
@@ -181,4 +201,25 @@ export interface AkunPengguna {
   badgeLabel: string;
   badgeColor: string;
   deskripsiTugas: string;
+  email?: string;
+  telepon?: string;
+  statusAktif?: boolean;
+  lastLogin?: string;
+}
+
+export interface PengaturanWeb {
+  namaKantor: string;
+  singkatanKantor: string;
+  kabupaten: string;
+  provinsi: string;
+  slogan: string;
+  alamatLengkap: string;
+  telepon: string;
+  email: string;
+  website: string;
+  teksPengumuman: string;
+  statusPengumuman: boolean;
+  tteOtoritas: string;
+  tteStatusAktif: boolean;
+  warnaTema: string;
 }

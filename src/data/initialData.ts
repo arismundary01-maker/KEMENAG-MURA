@@ -1,4 +1,4 @@
-import { LayananKatalog, Permohonan, AplikasiIntegrasi, SeksiType } from '../types/ptsp';
+import { LayananKatalog, Permohonan, AplikasiIntegrasi, SeksiType, MenuAplikasiWeb } from '../types/ptsp';
 
 export const SEKSI_CONFIG: Record<SeksiType, { nama: string; singkatan: string; kepala: string; nip: string; deskripsi: string; warna: string }> = {
   pendis: {
@@ -44,76 +44,104 @@ export const SEKSI_CONFIG: Record<SeksiType, { nama: string; singkatan: string; 
 };
 
 export const KATALOG_LAYANAN: LayananKatalog[] = [
-  // PENDIS
+  // PENDIS - Dikhususkan untuk IJOP Madrasah, IJOP Pontren, dan IJOP LPQ/MDT dengan Link Integrasi Resmi Kemenag
   {
     id: 'lay-pendis-01',
-    kode: 'PND-01',
+    kode: 'IJOP-MDR',
     seksi: 'pendis',
-    namaLayanan: 'Rekomendasi Izin Operasional Pendirian Madrasah',
-    deskripsi: 'Penerbitan surat rekomendasi teknis pendirian Madrasah baru (RA, MI, MTs, MA) di wilayah Kabupaten Musi Rawas.',
+    namaLayanan: 'Permohonan Izin Operasional (IJOP) Madrasah Baru (RA, MI, MTs, MA)',
+    deskripsi: 'Layanan verifikasi kelayakan teknis dan penerbitan rekomendasi/SK Izin Operasional Pendirian Madrasah baru di Kabupaten Murung Raya yang terintegrasi dengan Portal Resmi IJOP Ditjen Pendidikan Islam Kemenag RI.',
     estimasiHari: 3,
     biaya: 0,
-    dasarHukum: 'PMA Nomor 90 Tahun 2013 & KMA Nomor 1385 Tahun 2020',
-    outputDokumen: 'Surat Rekomendasi Izin Operasional Madrasah',
+    dasarHukum: 'PMA No. 90 Tahun 2013, PMA No. 60 Tahun 2015 & KMA No. 1385 Tahun 2020 tentang Tata Kelola Perizinan Madrasah',
+    outputDokumen: 'Surat Rekomendasi Teknis & SK Izin Operasional Madrasah (IJOP)',
+    portalResmiUrl: 'https://ijopmadrasah.kemenag.go.id',
+    namaPortalResmi: 'Portal Resmi IJOP Madrasah Kemenag RI',
+    keteranganPortal: 'Sistem Elektronik Perizinan Pendirian Madrasah Terpadu KSKK Ditjen Pendis Kemenag RI',
+    kategoriLembaga: 'madrasah',
     dokumenSyarat: [
-      'Surat Permohonan dari Yayasan/Lembaga bermaterai 10.000',
-      'Akta Notaris Yayasan dan SK Kemenkumham',
-      'Proposal Studi Kelayakan Pendirian Madrasah',
-      'Bukti Kepemilikan Lahan/Tanah (Sertifikat/Wakaf)',
-      'Data Calon Tenaga Pendidik dan Kependidikan'
+      'Surat Permohonan Resmi dari Badan Hukum Pembina / Yayasan (bermaterai Rp 10.000)',
+      'Salinan Akta Notaris Yayasan dan SK Pengesahan Badan Hukum Kemenkumham RI',
+      'Proposal Lengkap Studi Kelayakan Pendirian Madrasah (aspek geografis, demografis, dan sosiologis)',
+      'Bukti Kepemilikan Lahan/Tanah atas nama Yayasan (Sertifikat Hak Milik / Akta Ikrar Wakaf resmi)',
+      'Masterplan Tata Ruang Bangunan, Denah Lokasi, dan Foto Berwarna Sarana Prasarana (Ruang Kelas, Sanitasi/MCK, Ruang Guru)',
+      'Daftar Calon Kepala Madrasah & Tenaga Pendidik (minimal 80% berkualifikasi akademik S-1 linier)',
+      'Daftar Calon Peserta Didik (minimal 1 rombongan belajar / 15-20 siswa dengan lampiran Kartu Keluarga)',
+      'Dokumen Kurikulum Operasional Madrasah (Struktur Kurikulum Merdeka / Kementerian Agama)',
+      'Surat Pernyataan Kesanggupan Pembiayaan Operasional Pendidikan minimal 3 (tiga) tahun bermaterai',
+      'Surat Rekomendasi Tertulis dari Kepala Kantor Urusan Agama (KUA) Kecamatan setempat'
     ]
   },
   {
     id: 'lay-pendis-02',
-    kode: 'PND-02',
+    kode: 'IJOP-PNT',
     seksi: 'pendis',
-    namaLayanan: 'Rekomendasi Izin Operasional Pondok Pesantren / LPQ',
-    deskripsi: 'Rekomendasi penetapan tanda daftar atau izin operasional baru bagi Pondok Pesantren, MDT, atau LPQ.',
+    namaLayanan: 'Permohonan Izin Operasional (IJOP) & Tanda Daftar Pondok Pesantren',
+    deskripsi: 'Verifikasi kelayakan rukun pesantren dan penerbitan rekomendasi Tanda Daftar Keberadaan Pondok Pesantren baru di Kabupaten Murung Raya yang terintegrasi dengan sistem SITREN Kemenag RI.',
     estimasiHari: 3,
     biaya: 0,
-    dasarHukum: 'PMA Nomor 30 Tahun 2020 tentang Pendirian dan Penyelenggaraan Pesantren',
-    outputDokumen: 'Surat Rekomendasi Tanda Daftar Pesantren/LPQ',
+    dasarHukum: 'Undang-Undang Nomor 18 Tahun 2019 tentang Pesantren & PMA Nomor 30 Tahun 2020 tentang Pendirian dan Penyelenggaraan Pesantren',
+    outputDokumen: 'Surat Rekomendasi Teknis & Piagam Penetapan Nomor Statistik Pesantren (NSPP)',
+    portalResmiUrl: 'https://ditpdpontren.kemenag.go.id/sitren',
+    namaPortalResmi: 'SITREN Kemenag RI (Sistem Informasi Tanda Daftar Pesantren)',
+    keteranganPortal: 'Portal Pendaftaran Keberadaan & Izin Operasional Pesantren Ditpdpontren Kemenag RI',
+    kategoriLembaga: 'pontren',
     dokumenSyarat: [
-      'Surat Permohonan Pimpinan Lembaga/Kiai',
-      'Susunan Pengurus Lembaga & Riwayat Hidup Kyai/Pimpinan',
-      'Surat Keterangan Domisili dari Kantor Desa/Kelurahan',
-      'Daftar Santri Mukim (minimal 15 santri) & Kurikulum Pembelajaran',
-      'Foto Sarana Prasarana (Masjid/Mushalla, Asrama, Ruang Belajar)'
+      'Surat Permohonan Pendaftaran Pesantren dari Kiai/Pimpinan Lembaga bermaterai Rp 10.000',
+      'Profil Lengkap Pesantren, Susunan Pengurus, dan Riwayat Hidup / Sanad Keilmuan Kiai Pengasuh',
+      'Daftar Santri Mukim (menetap) minimal 15 (lima belas) orang dilengkapi fotokopi KTP/Kartu Keluarga',
+      'Surat Keterangan Domisili Pesantren dari Kantor Kepala Desa / Lurah setempat',
+      'Bukti Fisik Asrama Pemondokan Santri dan Tempat Ibadah (Masjid / Mushalla milik pesantren)',
+      'Silabus / Kurikulum Pengajian Kitab Kuning (Dirasah Islamiyah) yang diajarkan',
+      'Bukti Kepemilikan Hak Atas Tanah (Sertifikat Hak Milik Yayasan / Akta Ikrar Wakaf tidak dalam sengketa)',
+      'Surat Pernyataan Komitmen Kebangsaan, Setia pada NKRI, Pancasila, dan UUD 1945 bermaterai',
+      'Foto Berwarna Papan Nama Pesantren, Asrama Putra/Putri, Ruang Belajar, dan Sarana Sanitasi/MCK'
     ]
   },
   {
     id: 'lay-pendis-03',
-    kode: 'PND-03',
+    kode: 'IJOP-LPQ',
     seksi: 'pendis',
-    namaLayanan: 'Surat Keterangan Pengganti Ijazah Rusak / Hilang',
-    deskripsi: 'Penerbitan surat keterangan pengganti ijazah madrasah yang hilang atau rusak bagi alumni madrasah.',
-    estimasiHari: 1,
+    namaLayanan: 'Permohonan Izin Operasional (IJOP) LPQ (TPQ/TQA) & MDT',
+    deskripsi: 'Layanan verifikasi berkas dan penerbitan Surat Keputusan Tanda Daftar Lembaga Pendidikan Al-Qur\'an (LPQ/TPQ) dan Madrasah Diniyah Takmiliyah (MDT) di Kabupaten Murung Raya yang terkoneksi ke SIPDAR-PQ Kemenag RI.',
+    estimasiHari: 3,
     biaya: 0,
-    dasarHukum: 'Permendikbud No. 29 Tahun 2014 & Juknis Pendis Kemenag',
-    outputDokumen: 'Surat Keterangan Pengganti Ijazah Ber-TTE',
+    dasarHukum: 'PMA No. 13 Tahun 2014 & Keputusan Dirjen Pendis No. 91 Tahun 2020 tentang Petunjuk Teknis Penyelenggaraan LPQ',
+    outputDokumen: 'SK Tanda Daftar Lembaga & Piagam Nomor Statistik LPQ / MDT (NSLPQ / NSMDT)',
+    portalResmiUrl: 'https://sipdar-pq.kemenag.go.id',
+    namaPortalResmi: 'SIPDAR-PQ Kemenag RI (Sistem Pelayanan Tanda Daftar LPQ)',
+    keteranganPortal: 'Portal Resmi Pelayanan Tanda Daftar Lembaga Pendidikan Al-Qur\'an Ditjen Pendidikan Islam Kemenag RI',
+    kategoriLembaga: 'lpq_mdt',
     dokumenSyarat: [
-      'Surat Tanda Penerimaan Laporan Kehilangan (STPLK) dari Kepolisian',
-      'Surat Keterangan dari Kepala Madrasah Asal',
-      'Fotokopi Ijazah yang hilang (bila ada) atau Buku Induk Siswa',
-      'Fotokopi KTP / KK Pemohon',
-      'Pas Foto 3x4 Hitam Putih 2 Lembar'
+      'Surat Permohonan Tanda Daftar LPQ/MDT dari Kepala Lembaga bermaterai Rp 10.000',
+      'Susunan Struktur Pengurus Organisasi / Pengelola LPQ / MDT',
+      'Daftar Tenaga Pendidik / Ustadz-Ustadzah (kualifikasi ijazah/syahadah baca tulis Al-Qur\'an)',
+      'Daftar Nama Santri Aktif (minimal 15 santri) dilengkapi tanggal lahir dan nama wali santri',
+      'Jadwal Kegiatan Belajar Mengajar (KBM) mingguan dan kurikulum materi pembelajaran Al-Qur\'an/Diniyah',
+      'Surat Keterangan Domisili Tempat Belajar dari Kepala Desa / Kelurahan setempat',
+      'Surat Rekomendasi Kelayakan dari Kepala Kantor Urusan Agama (KUA) Kecamatan setempat',
+      'Surat Keterangan Status Tempat Belajar (Gedung Sendiri / Wakaf / Pinjam Pakai Masjid/Mushalla)',
+      'Foto Dokumentasi Papan Nama Lembaga dan Kegiatan Pembelajaran Santri di Ruang Kelas'
     ]
   },
   {
     id: 'lay-pendis-04',
-    kode: 'PND-04',
+    kode: 'PND-MURA',
     seksi: 'pendis',
-    namaLayanan: 'Rekomendasi Mutasi Siswa Madrasah Antar Provinsi/Kabupaten',
-    deskripsi: 'Surat rekomendasi izin pindah sekolah/madrasah lintas wilayah.',
+    namaLayanan: 'Sinkronisasi Pangkalan Data SIPENDIS MURA (sipendismura.my.id)',
+    deskripsi: 'Layanan integrasi mandiri data kelembagaan madrasah, pontren, LPQ, dan pendidik PAI Kabupaten Murung Raya pada portal web resmi sipendismura.my.id.',
     estimasiHari: 1,
     biaya: 0,
-    dasarHukum: 'Keputusan Dirjen Pendis Kemenag RI tentang Tata Kelola Mutasi Peserta Didik',
-    outputDokumen: 'Surat Rekomendasi Mutasi Siswa',
+    dasarHukum: 'Keputusan Kepala Kantor Kemenag Kabupaten Murung Raya tentang Tata Kelola SIPENDIS MURA',
+    outputDokumen: 'Akun Terverifikasi & Rekapitulasi Data Terpadu EMIS/SIMPATIKA/SIAGA',
+    portalResmiUrl: 'https://sipendismura.my.id',
+    namaPortalResmi: 'Portal Resmi SIPENDIS MURA (sipendismura.my.id)',
+    keteranganPortal: 'Pangkalan Data Pendidikan Islam Mandiri Kantor Kementerian Agama Kabupaten Murung Raya',
     dokumenSyarat: [
-      'Surat Permohonan Orang Tua/Wali Murid',
-      'Surat Keterangan Pindah dari Madrasah Asal (Validasi EMIS)',
-      'Surat Keterangan Siap Menerima dari Madrasah Tujuan',
-      'Fotokopi Rapor Terakhir & Kartu Keluarga'
+      'SK Penetapan Izin Operasional (IJOP) / Tanda Daftar Lembaga yang masih berlaku',
+      'NPSN / NSM / NSPP / NSLPQ resmi yang tercatat di Kementerian Agama',
+      'Akun Operator Lembaga aktif dan SK Penunjukan Operator dari Kepala Lembaga',
+      'Berita Acara Pendataan Semester Berjalan (EMIS 4.0 / SIMPATIKA / SIAGA PAI)'
     ]
   },
 
@@ -194,7 +222,7 @@ export const KATALOG_LAYANAN: LayananKatalog[] = [
     kode: 'KRS-01',
     seksi: 'bimas_kristen',
     namaLayanan: 'Surat Rekomendasi Tanda Daftar Rumah Ibadat / Gereja',
-    deskripsi: 'Penerbitan surat rekomendasi pencatatan dan tanda daftar rumah ibadat gereja di Kab. Musi Rawas.',
+    deskripsi: 'Penerbitan surat rekomendasi pencatatan dan tanda daftar rumah ibadat gereja di Kab. Murung Raya.',
     estimasiHari: 3,
     biaya: 0,
     dasarHukum: 'PBM Menag dan Mendagri No. 9 dan 8 Tahun 2006',
@@ -203,7 +231,7 @@ export const KATALOG_LAYANAN: LayananKatalog[] = [
       'Surat Permohonan dari Pimpinan Sinode / Majelis Gereja',
       'Daftar Nama & KTP Jemaat Pengguna Rumah Ibadat (Minimal 90 orang disahkan Kades/Lurah)',
       'Surat Dukungan Masyarakat Setempat (Minimal 60 orang disahkan Kades/Lurah)',
-      'Rekomendasi Tertulis dari Forum Kerukunan Umat Beragama (FKUB) Kab. Musi Rawas',
+      'Rekomendasi Tertulis dari Forum Kerukunan Umat Beragama (FKUB) Kab. Murung Raya',
       'Bukti Kepemilikan atau Hak Guna Tanah/Bangunan'
     ]
   },
@@ -212,7 +240,7 @@ export const KATALOG_LAYANAN: LayananKatalog[] = [
     kode: 'KRS-02',
     seksi: 'bimas_kristen',
     namaLayanan: 'Surat Keterangan Pelayanan Rohaniwan / Pendeta',
-    deskripsi: 'Penerbitan surat keterangan pelayanan keagamaan untuk pendeta/pelayan gereja di Kab. Musi Rawas.',
+    deskripsi: 'Penerbitan surat keterangan pelayanan keagamaan untuk pendeta/pelayan gereja di Kab. Murung Raya.',
     estimasiHari: 1,
     biaya: 0,
     dasarHukum: 'Keputusan Dirjen Bimas Kristen Kemenag RI',
@@ -246,18 +274,18 @@ export const KATALOG_LAYANAN: LayananKatalog[] = [
     id: 'lay-hindu-01',
     kode: 'HND-01',
     seksi: 'bimas_hindu',
-    namaLayanan: 'Surat Keterangan Tanda Daftar Rumah Ibadah Pura',
-    deskripsi: 'Penerbitan surat keterangan tanda daftar dan penetapan status Pura bagi umat Hindu Kab. Musi Rawas.',
+    namaLayanan: 'Surat Keterangan Tanda Daftar Rumah Ibadah Pura / Balai Basarah',
+    deskripsi: 'Penerbitan surat keterangan tanda daftar dan penetapan status Pura atau Balai Basarah bagi umat Hindu Kaharingan Kab. Murung Raya.',
     estimasiHari: 3,
     biaya: 0,
     dasarHukum: 'PBM No. 9 dan 8 Tahun 2006 & Juknis Ditjen Bimas Hindu',
-    outputDokumen: 'Surat Tanda Daftar Rumah Ibadah Pura Ber-TTE',
+    outputDokumen: 'Surat Tanda Daftar Rumah Ibadah Pura / Balai Basarah Ber-TTE',
     dokumenSyarat: [
-      'Surat Permohonan dari Pengurus Pengempon Pura / PHDI Setempat',
-      'Daftar Umat / Krama Pura Pengguna Rumah Ibadah',
-      'Rekomendasi dari Parisada Hindu Dharma Indonesia (PHDI) Kab. Musi Rawas',
-      'Surat Status Tanah (Sertifikat Hak Milik/Hibah/Wakaf Hindu)',
-      'Dokumentasi Foto Pura (Mandala, Pelinggih, Candi Bentar)'
+      'Surat Permohonan dari Pengurus Pengempon Pura / Pengurus Balai Basarah Setempat',
+      'Daftar Umat / Krama Pengguna Rumah Ibadah',
+      'Rekomendasi dari Parisada Hindu Dharma Indonesia (PHDI) / Majelis Besar Agama Hindu Kaharingan Kab. Murung Raya',
+      'Surat Status Tanah (Sertifikat Hak Milik/Hibah/Tanah Adat)',
+      'Dokumentasi Foto Bangunan (Mandala, Pelinggih, atau Balai Basarah)'
     ]
   },
   {
@@ -281,15 +309,15 @@ export const KATALOG_LAYANAN: LayananKatalog[] = [
     id: 'lay-hindu-03',
     kode: 'HND-03',
     seksi: 'bimas_hindu',
-    namaLayanan: 'Surat Keterangan Rohaniwan Hindu (Pinandita / Pemangku)',
-    deskripsi: 'Pencatatan dan penerbitan surat keterangan pelayanan bagi Pemangku/Pinandita umat Hindu.',
+    namaLayanan: 'Surat Keterangan Rohaniwan Hindu (Pinandita / Pemangku / Basir)',
+    deskripsi: 'Pencatatan dan penerbitan surat keterangan pelayanan bagi Pemangku/Pinandita/Basir umat Hindu di Murung Raya.',
     estimasiHari: 1,
     biaya: 0,
     dasarHukum: 'Juklak Bimas Hindu Kemenag RI',
     outputDokumen: 'Surat Keterangan Rohaniwan Hindu Ber-TTE',
     dokumenSyarat: [
-      'Surat Rekomendasi dari PHDI Kab. Musi Rawas',
-      'Surat Keputusan Widhi Widhana / Pensucian Pemangku',
+      'Surat Rekomendasi dari PHDI / Lembaga Kaharingan Kab. Murung Raya',
+      'Surat Keputusan Widhi Widhana / Pensucian Pemangku / Basir',
       'Fotokopi KTP & KK Rohaniwan'
     ]
   },
@@ -1145,14 +1173,52 @@ export const BERITA_TERKINI: import('../types/ptsp').BeritaItem[] = [
   }
 ];
 
+// Konfigurasi Standar Web Resmi Kementerian Agama Kabupaten Murung Raya
+export const PENGATURAN_WEB_DEFAULT: import('../types/ptsp').PengaturanWeb = {
+  namaKantor: 'Kantor Kementerian Agama Kabupaten Murung Raya',
+  singkatanKantor: 'Kemenag Murung Raya',
+  kabupaten: 'Kabupaten Murung Raya',
+  provinsi: 'Kalimantan Tengah',
+  slogan: 'Ikhlas Beramal - Melayani Sepenuh Hati, Cepat, Akuntabel & BerAKHLAK',
+  alamatLengkap: 'Jl. Jenderal Sudirman No. 12, Komplek Perkantoran Pemkab Murung Raya, Puruk Cahu, Kalimantan Tengah 73911',
+  telepon: '(0536) 3192001',
+  email: 'kemenag.murungraya@kemenag.go.id',
+  website: 'https://murungraya.kemenag.go.id',
+  teksPengumuman: 'Selamat Datang di Portal Resmi PTSP Kantor Kementerian Agama Kabupaten Murung Raya. Layanan perizinan dan rekomendasi online bebas biaya (Rp 0,-) dan ber-TTE resmi BSrE BSSN.',
+  statusPengumuman: true,
+  tteOtoritas: 'Balai Sertifikasi Elektronik (BSrE) - Badan Siber dan Sandi Negara (BSSN)',
+  tteStatusAktif: true,
+  warnaTema: 'emerald'
+};
+
 // Daftar Akun Sistem Resmi untuk Pengujian & Transisi Role Sesuai Permintaan User
 export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
+  {
+    id: 'acc-super-admin',
+    username: 'superadmin.kemenag',
+    namaLengkap: 'Pranata Komputer Ahli / Super Admin',
+    role: 'super_admin',
+    jabatan: 'Super Administrator & Pengelola Sistem Portal Utama',
+    nip: '198509182010011008',
+    email: 'superadmin.mura@kemenag.go.id',
+    telepon: '081152009812',
+    statusAktif: true,
+    lastLogin: 'Hari ini, 09:45 WIB',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    badgeLabel: 'Super Admin Sistem',
+    badgeColor: 'bg-red-100 text-red-800 border-red-300',
+    deskripsiTugas: 'Mengelola seluruh data master, akun pengguna masing-masing seksi dan pimpinan, CMS publikasi berita, serta konfigurasi web resmi Kementerian Agama Kabupaten Murung Raya.'
+  },
   {
     id: 'acc-pemohon',
     username: 'pemohon.warga',
     namaLengkap: 'Masyarakat / Pemohon Layanan',
     role: 'pemohon',
     jabatan: 'Masyarakat Umum / Lembaga Keagamaan',
+    email: 'warga.mura@gmail.com',
+    telepon: '081250119842',
+    statusAktif: true,
+    lastLogin: 'Baru saja',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     badgeLabel: 'Portal Pemohon',
     badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
@@ -1165,7 +1231,11 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
     role: 'operator_ptsp',
     jabatan: 'Petugas Front Office / Operator PTSP',
     nip: '198806152011011003',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    email: 'rahmat.ptsp@kemenag.go.id',
+    telepon: '081349887711',
+    statusAktif: true,
+    lastLogin: '10 menit lalu',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     badgeLabel: 'Operator PTSP (Front Office)',
     badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
     deskripsiTugas: 'Memproses berkas masuk, verifikasi checklist dokumen fisik & digital, beri catatan revisi, dan disposisi ke seksi teknis.'
@@ -1178,10 +1248,14 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
     seksi: 'pendis',
     jabatan: 'Kepala Seksi Pendidikan Islam (Pendis)',
     nip: '197405122000031002',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    email: 'kasi.pendis@kemenag.go.id',
+    telepon: '081251992011',
+    statusAktif: true,
+    lastLogin: '30 menit lalu',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
     badgeLabel: 'Operator/Kasi Pendis',
     badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    deskripsiTugas: 'Telaah teknis izin operasional madrasah & ponpes, integrasi EMIS 4.0, SIMPATIKA, SIAGA PAI, dan draft rekomendasi.'
+    deskripsiTugas: 'Telaah teknis izin operasional madrasah & ponpes, integrasi EMIS 4.0, SIMPATIKA, SIAGA PAI, sipendismura.my.id, dan draft rekomendasi.'
   },
   {
     id: 'acc-bimas-islam',
@@ -1191,7 +1265,11 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
     seksi: 'bimas_islam',
     jabatan: 'Kepala Seksi Bimbingan Masyarakat Islam',
     nip: '197608142003121001',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    email: 'kasi.bimasislam@kemenag.go.id',
+    telepon: '085249001122',
+    statusAktif: true,
+    lastLogin: '1 jam lalu',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
     badgeLabel: 'Operator/Kasi Bimas Islam',
     badgeColor: 'bg-teal-100 text-teal-800 border-teal-300',
     deskripsiTugas: 'Telaah teknis bantuan rumah ibadah, majelis taklim, arah kiblat, integrasi SIMKAH Gen 4, SIMAS, dan SIWAK.'
@@ -1204,7 +1282,11 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
     seksi: 'bimas_kristen',
     jabatan: 'Penyelenggara Bimas Kristen',
     nip: '198103252008011014',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    email: 'bimas.kristen@kemenag.go.id',
+    telepon: '081347890012',
+    statusAktif: true,
+    lastLogin: '2 jam lalu',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
     badgeLabel: 'Operator/Penyelenggara Kristen',
     badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-300',
     deskripsiTugas: 'Verifikasi tanda daftar rumah ibadat gereja, surat keterangan rohaniwan Kristen, integrasi SIAGAMA.'
@@ -1217,7 +1299,11 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
     seksi: 'bimas_hindu',
     jabatan: 'Penyelenggara Bimas Hindu',
     nip: '198307182009121003',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    email: 'bimas.hindu@kemenag.go.id',
+    telepon: '082153998811',
+    statusAktif: true,
+    lastLogin: 'Kemarin',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
     badgeLabel: 'Operator/Penyelenggara Hindu',
     badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
     deskripsiTugas: 'Verifikasi tanda daftar pura, pasraman, pembinaan pemangku/pinandita, integrasi SIMBA Hindu.'
@@ -1230,7 +1316,11 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
     seksi: 'kepegawaian',
     jabatan: 'Kepala Subbagian Tata Usaha (Kasubbag TU)',
     nip: '197211051998031004',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+    email: 'kasubbag.tu@kemenag.go.id',
+    telepon: '081152003314',
+    statusAktif: true,
+    lastLogin: '45 menit lalu',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
     badgeLabel: 'Kasubbag Tata Usaha',
     badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
     deskripsiTugas: 'Manajemen permohonan cuti, usulan kenaikan pangkat, KGB, SKMK, integrasi SIMPEG 5, SIASN BKN, dan Pusaka.'
@@ -1240,12 +1330,147 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
     username: 'kakan.kemenag',
     namaLengkap: 'Dr. H. Hermadi, S.Ag., M.Si',
     role: 'kepala_kantor',
-    jabatan: 'Kepala Kantor Kementerian Agama Kab. Musi Rawas',
+    jabatan: 'Kepala Kantor Kementerian Agama Kab. Murung Raya',
     nip: '197004121996031001',
+    email: 'kepala.kantor@kemenag.go.id',
+    telepon: '081152001001',
+    statusAktif: true,
+    lastLogin: '15 menit lalu',
     avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
     badgeLabel: 'Pimpinan (Kepala Kantor)',
     badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
     deskripsiTugas: 'Persetujuan akhir dokumen permohonan dan penandatanganan elektronik resmi (TTE BSrE BSSN) berpassphrase.'
   }
 ];
+
+export const MENU_APLIKASI_WEB_DEFAULT: MenuAplikasiWeb[] = [
+  {
+    id: 'app-web-utama',
+    namaAplikasi: 'Portal Web Utama Kemenag Kab. Murung Raya',
+    singkatan: 'WEB UTAMA',
+    kategori: 'portal_utama',
+    deskripsi: 'Pusat informasi resmi, profil kantor, berita teraktual, struktur organisasi, dan galeri kegiatan Kantor Kementerian Agama Kabupaten Murung Raya.',
+    url: 'https://murungraya.kemenag.go.id',
+    badgeText: 'Portal Resmi Kemenag',
+    warnaTema: 'emerald',
+    ikon: 'Globe',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 1
+  },
+  {
+    id: 'app-sipendis-mura',
+    namaAplikasi: 'SIPENDIS MURA (Sistem Informasi Pendidikan Islam)',
+    singkatan: 'SIPENDIS',
+    kategori: 'pendis',
+    deskripsi: 'Portal terpadu seksi Pendidikan Islam Kemenag Murung Raya untuk data madrasah, pontren, LPQ/TPQ, sarpras dan pendidik PAI.',
+    url: 'https://sipendismura.my.id',
+    badgeText: 'Terintegrasi Khusus Murung Raya',
+    warnaTema: 'emerald',
+    ikon: 'GraduationCap',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 2
+  },
+  {
+    id: 'app-simas',
+    namaAplikasi: 'SIMAS (Sistem Informasi Masjid Kemenag)',
+    singkatan: 'SIMAS',
+    kategori: 'bimas_islam',
+    deskripsi: 'Database profil masjid, musala, nomor ID nasional kemasjidan, peta lokasi, serta penerbitan rekomendasi arah kiblat Kemenag RI.',
+    url: 'https://simas.kemenag.go.id',
+    badgeText: 'Kemasjidan Nasional',
+    warnaTema: 'teal',
+    ikon: 'Building2',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 3
+  },
+  {
+    id: 'app-simkah',
+    namaAplikasi: 'SIMKAH Gen-4 (Sistem Informasi Manajemen Nikah)',
+    singkatan: 'SIMKAH',
+    kategori: 'bimas_islam',
+    deskripsi: 'Pendaftaran nikah daring, validasi buku nikah digital ber-QR Code, serta tata kelola KUA se-Kabupaten Murung Raya.',
+    url: 'https://simkah4.kemenag.go.id',
+    badgeText: 'Layanan Nikah & KUA',
+    warnaTema: 'teal',
+    ikon: 'Users',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 4
+  },
+  {
+    id: 'app-siwak',
+    namaAplikasi: 'SIWAK (Sistem Informasi Wakaf Kemenag RI)',
+    singkatan: 'SIWAK',
+    kategori: 'bimas_islam',
+    deskripsi: 'Pendataan tanah wakaf, sertifikasi aset keagamaan, serta pembinaan dan legalitas nazhir di Kabupaten Murung Raya.',
+    url: 'https://siwak.kemenag.go.id',
+    badgeText: 'Aset Wakaf & Zakat',
+    warnaTema: 'teal',
+    ikon: 'Landmark',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 5
+  },
+  {
+    id: 'app-siagama-kristen',
+    namaAplikasi: 'SIAGAMA & SIMPATIKA Kristen Kemenag RI',
+    singkatan: 'SIAGAMA',
+    kategori: 'bimas_kristen',
+    deskripsi: 'Pendaftaran gereja dan rumah ibadah, database rohaniwan, pembinaan penyuluh agama, serta sertifikasi guru agama Kristen.',
+    url: 'https://bimas-kristen.kemenag.go.id',
+    badgeText: 'Gereja & Rohaniwan',
+    warnaTema: 'blue',
+    ikon: 'Sparkles',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 6
+  },
+  {
+    id: 'app-simba-hindu',
+    namaAplikasi: 'SIMBA Hindu (Sistem Informasi Manajemen Bimas Hindu)',
+    singkatan: 'SIMBA',
+    kategori: 'bimas_hindu',
+    deskripsi: 'Tanda daftar pura, pendataan kelembagaan pasraman, izin operasional pasraman, serta database pemangku/pinandita Hindu.',
+    url: 'https://bimashindu.kemenag.go.id',
+    badgeText: 'Pura & Pasraman',
+    warnaTema: 'amber',
+    ikon: 'Flame',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 7
+  },
+  {
+    id: 'app-kepegawaian-siasn',
+    namaAplikasi: 'SIMPEG 5 Kemenag & SIASN BKN RI',
+    singkatan: 'SIMPEG 5',
+    kategori: 'kepegawaian',
+    deskripsi: 'Pusat pengelolaan data ASN Kemenag Murung Raya, SKP e-Kinerja, kenaikan pangkat digital, KGB, dan usulan mutasi.',
+    url: 'https://simpeg5.kemenag.go.id',
+    badgeText: 'Kepegawaian ASN',
+    warnaTema: 'indigo',
+    ikon: 'ShieldCheck',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 8
+  },
+  {
+    id: 'app-pusaka',
+    namaAplikasi: 'PUSAKA Superapps Kementerian Agama RI',
+    singkatan: 'PUSAKA',
+    kategori: 'layanan_nasional',
+    deskripsi: 'Superapps resmi terintegrasi Kementerian Agama RI yang menyatukan seluruh kanal layanan publik, keagamaan, dan pendidikan.',
+    url: 'https://pusaka.kemenag.go.id',
+    badgeText: 'Superapps Kemenag RI',
+    warnaTema: 'purple',
+    ikon: 'Sparkles',
+    statusAktif: true,
+    bukaTabBaru: true,
+    urutan: 9
+  }
+];
+
+
 

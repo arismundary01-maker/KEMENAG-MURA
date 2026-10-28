@@ -31,10 +31,10 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
   onClose, 
   presetLayanan 
 }) => {
-  const { tambahPermohonan, setSelectedTrackingResi, setActiveView } = usePTSP();
+  const { tambahPermohonan, setSelectedTrackingResi, setActiveView, katalogLayanan, pengaturanWeb } = usePTSP();
 
   const [step, setStep] = useState<number>(presetLayanan ? 2 : 1);
-  const [selectedLayananId, setSelectedLayananId] = useState<string>(presetLayanan?.id || KATALOG_LAYANAN[0].id);
+  const [selectedLayananId, setSelectedLayananId] = useState<string>(presetLayanan?.id || (katalogLayanan[0]?.id || KATALOG_LAYANAN[0].id));
   
   // Form fields
   const [namaLengkap, setNamaLengkap] = useState('');
@@ -43,7 +43,7 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
   const [email, setEmail] = useState('');
   const [instansiOrLembaga, setInstansiOrLembaga] = useState('');
   const [alamat, setAlamat] = useState('');
-  const [kecamatan, setKecamatan] = useState('Muara Beliti');
+  const [kecamatan, setKecamatan] = useState('Puruk Cahu');
   const [perihal, setPerihal] = useState('');
   const [catatanPemohon, setCatatanPemohon] = useState('');
 
@@ -54,7 +54,7 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  const currentLayanan = KATALOG_LAYANAN.find(l => l.id === selectedLayananId) || KATALOG_LAYANAN[0];
+  const currentLayanan = katalogLayanan.find(l => l.id === selectedLayananId) || katalogLayanan[0] || KATALOG_LAYANAN[0];
 
   const handleSimulateFileUpload = (docIndex: number) => {
     const fakeSizes = ['680 KB', '1.4 MB', '2.1 MB', '890 KB', '3.2 MB'];
@@ -104,7 +104,7 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
         instansiOrLembaga,
         alamat,
         kecamatan,
-        kabupaten: 'Musi Rawas'
+        kabupaten: pengaturanWeb.kabupaten
       },
       perihal: perihal || `Permohonan ${currentLayanan.namaLayanan}`,
       catatanPemohon,
@@ -143,7 +143,7 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
               Formulir Pendaftaran Online Mandiri
             </span>
             <h3 className="font-bold text-lg text-white mt-0.5">
-              Pengajuan Layanan PTSP Kemenag Musi Rawas
+              Pengajuan Layanan PTSP {pengaturanWeb.namaKantor}
             </h3>
           </div>
           <button 
@@ -224,7 +224,7 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
                   Pilih Layanan PTSP yang Diinginkan:
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-1">
-                  {KATALOG_LAYANAN.map((lay) => {
+                  {katalogLayanan.map((lay) => {
                     const isSelected = lay.id === selectedLayananId;
                     return (
                       <div

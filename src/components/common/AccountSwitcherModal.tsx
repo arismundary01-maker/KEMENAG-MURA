@@ -22,7 +22,7 @@ interface AccountSwitcherModalProps {
 }
 
 export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOpen, onClose }) => {
-  const { currentRole, setCurrentRole, setActiveView, setSelectedSeksiTab } = usePTSP();
+  const { currentRole, setCurrentRole, setActiveView, setSelectedSeksiTab, daftarAkun } = usePTSP();
   const [selectedAccRole, setSelectedAccRole] = useState<UserRole>(currentRole);
 
   if (!isOpen) return null;
@@ -32,7 +32,9 @@ export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOp
     setSelectedAccRole(role);
 
     // Auto-navigate to appropriate view based on role
-    if (role === 'pemohon') {
+    if (role === 'super_admin') {
+      setActiveView('super_admin_portal');
+    } else if (role === 'pemohon') {
       setActiveView('public_portal');
     } else if (role === 'operator_ptsp') {
       setActiveView('operator_portal');
@@ -60,6 +62,7 @@ export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOp
 
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
+      case 'super_admin': return <ShieldCheck className="w-5 h-5 text-red-600" />;
       case 'pemohon': return <Users className="w-5 h-5 text-emerald-600" />;
       case 'operator_ptsp': return <Briefcase className="w-5 h-5 text-blue-600" />;
       case 'kasi_pendis': return <GraduationCap className="w-5 h-5 text-emerald-600" />;
@@ -96,11 +99,11 @@ export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOp
         {/* Content list */}
         <div className="p-5 overflow-y-auto space-y-3 divide-y divide-slate-100 flex-1">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider pb-1">
-            Akun Sistem Terdaftar (Kemenag Kab. Musi Rawas)
+            Akun Sistem Terdaftar (Kemenag Kab. Murung Raya)
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-            {DAFTAR_AKUN_SISTEM.map((acc) => {
+            {daftarAkun.map((acc) => {
               const isCurrent = currentRole === acc.role;
               return (
                 <div

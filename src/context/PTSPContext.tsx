@@ -5,9 +5,23 @@ import {
   SeksiType, 
   NotifikasiItem, 
   StatusPermohonan, 
-  DokumenPersyaratan 
+  DokumenPersyaratan,
+  AkunPengguna,
+  BeritaItem,
+  PengaturanWeb,
+  LayananKatalog,
+  KepalaKantorHistory,
+  MenuAplikasiWeb
 } from '../types/ptsp';
-import { INITIAL_PERMOHONAN } from '../data/initialData';
+import { 
+  INITIAL_PERMOHONAN, 
+  DAFTAR_AKUN_SISTEM, 
+  BERITA_TERKINI, 
+  PENGATURAN_WEB_DEFAULT,
+  KATALOG_LAYANAN,
+  DATA_KEPALA_KANTOR,
+  MENU_APLIKASI_WEB_DEFAULT
+} from '../data/initialData';
 import { soundService } from '../services/soundNotification';
 import confetti from 'canvas-confetti';
 
@@ -23,8 +37,8 @@ interface PTSPContextType {
   permohonanList: Permohonan[];
   currentRole: UserRole;
   setCurrentRole: (role: UserRole) => void;
-  activeView: 'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier';
-  setActiveView: (view: 'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier') => void;
+  activeView: 'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier' | 'super_admin_portal';
+  setActiveView: (view: 'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier' | 'super_admin_portal') => void;
   selectedSeksiTab: SeksiType;
   setSelectedSeksiTab: (seksi: SeksiType) => void;
   
@@ -39,6 +53,36 @@ interface PTSPContextType {
   // Tracking
   selectedTrackingResi: string | null;
   setSelectedTrackingResi: (resi: string | null) => void;
+
+  // Super Admin Management Data & Actions
+  daftarAkun: AkunPengguna[];
+  tambahAkun: (data: Partial<AkunPengguna>) => void;
+  editAkun: (id: string, data: Partial<AkunPengguna>) => void;
+  hapusAkun: (id: string) => void;
+  toggleStatusAkun: (id: string) => void;
+
+  daftarBerita: BeritaItem[];
+  tambahBerita: (data: Partial<BeritaItem>) => void;
+  editBerita: (id: string, data: Partial<BeritaItem>) => void;
+  hapusBerita: (id: string) => void;
+
+  katalogLayanan: LayananKatalog[];
+  tambahLayanan: (data: Partial<LayananKatalog>) => void;
+  editLayanan: (id: string, data: Partial<LayananKatalog>) => void;
+  hapusLayanan: (id: string) => void;
+
+  dataKepalaKantor: KepalaKantorHistory[];
+  tambahKepalaKantor: (data: Partial<KepalaKantorHistory>) => void;
+  editKepalaKantor: (id: string, data: Partial<KepalaKantorHistory>) => void;
+  hapusKepalaKantor: (id: string) => void;
+
+  daftarMenuAplikasi: MenuAplikasiWeb[];
+  tambahMenuAplikasi: (data: Partial<MenuAplikasiWeb>) => void;
+  editMenuAplikasi: (id: string, data: Partial<MenuAplikasiWeb>) => void;
+  hapusMenuAplikasi: (id: string) => void;
+
+  pengaturanWeb: PengaturanWeb;
+  updatePengaturanWeb: (data: Partial<PengaturanWeb>) => void;
 
   // Actions
   tambahPermohonan: (data: Partial<Permohonan>) => string;
@@ -85,13 +129,62 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [currentRole, setCurrentRole] = useState<UserRole>('pemohon');
-  const [activeView, setActiveView] = useState<'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier'>('public_portal');
+  const [activeView, setActiveView] = useState<'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier' | 'super_admin_portal'>('public_portal');
   const [selectedSeksiTab, setSelectedSeksiTab] = useState<SeksiType>('pendis');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [selectedTrackingResi, setSelectedTrackingResi] = useState<string | null>(null);
   const [selectedPermohonanForDetail, setSelectedPermohonanForDetail] = useState<Permohonan | null>(null);
   const [showTTEModalForResi, setShowTTEModalForResi] = useState<string | null>(null);
   const [whatsAppAlert, setWhatsAppAlert] = useState<WhatsAppSimulasi | null>(null);
+
+  // Super Admin reactive states
+  const [daftarAkun, setDaftarAkun] = useState<AkunPengguna[]>(() => {
+    const saved = localStorage.getItem('kemenag_mura_daftar_akun');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return DAFTAR_AKUN_SISTEM; }
+    }
+    return DAFTAR_AKUN_SISTEM;
+  });
+
+  const [daftarBerita, setDaftarBerita] = useState<BeritaItem[]>(() => {
+    const saved = localStorage.getItem('kemenag_mura_daftar_berita');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return BERITA_TERKINI; }
+    }
+    return BERITA_TERKINI;
+  });
+
+  const [katalogLayanan, setKatalogLayanan] = useState<LayananKatalog[]>(() => {
+    const saved = localStorage.getItem('kemenag_mura_katalog_layanan');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return KATALOG_LAYANAN; }
+    }
+    return KATALOG_LAYANAN;
+  });
+
+  const [dataKepalaKantor, setDataKepalaKantor] = useState<KepalaKantorHistory[]>(() => {
+    const saved = localStorage.getItem('kemenag_mura_kepala_kantor');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return DATA_KEPALA_KANTOR; }
+    }
+    return DATA_KEPALA_KANTOR;
+  });
+
+  const [daftarMenuAplikasi, setDaftarMenuAplikasi] = useState<MenuAplikasiWeb[]>(() => {
+    const saved = localStorage.getItem('kemenag_mura_menu_aplikasi');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return MENU_APLIKASI_WEB_DEFAULT; }
+    }
+    return MENU_APLIKASI_WEB_DEFAULT;
+  });
+
+  const [pengaturanWeb, setPengaturanWeb] = useState<PengaturanWeb>(() => {
+    const saved = localStorage.getItem('kemenag_mura_pengaturan_web');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return PENGATURAN_WEB_DEFAULT; }
+    }
+    return PENGATURAN_WEB_DEFAULT;
+  });
 
   const [notifications, setNotifications] = useState<NotifikasiItem[]>([
     {
@@ -127,6 +220,196 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     localStorage.setItem('kemenag_ptsp_permohonan', JSON.stringify(permohonanList));
   }, [permohonanList]);
+
+  useEffect(() => {
+    localStorage.setItem('kemenag_mura_daftar_akun', JSON.stringify(daftarAkun));
+  }, [daftarAkun]);
+
+  useEffect(() => {
+    localStorage.setItem('kemenag_mura_daftar_berita', JSON.stringify(daftarBerita));
+  }, [daftarBerita]);
+
+  useEffect(() => {
+    localStorage.setItem('kemenag_mura_katalog_layanan', JSON.stringify(katalogLayanan));
+  }, [katalogLayanan]);
+
+  useEffect(() => {
+    localStorage.setItem('kemenag_mura_kepala_kantor', JSON.stringify(dataKepalaKantor));
+  }, [dataKepalaKantor]);
+
+  useEffect(() => {
+    localStorage.setItem('kemenag_mura_menu_aplikasi', JSON.stringify(daftarMenuAplikasi));
+  }, [daftarMenuAplikasi]);
+
+  useEffect(() => {
+    localStorage.setItem('kemenag_mura_pengaturan_web', JSON.stringify(pengaturanWeb));
+  }, [pengaturanWeb]);
+
+  // Super Admin CRUD Handlers
+  const tambahAkun = (data: Partial<AkunPengguna>) => {
+    const newId = 'acc-' + Date.now();
+    const newAkun: AkunPengguna = {
+      id: newId,
+      username: data.username || `user.${Date.now().toString().slice(-4)}`,
+      namaLengkap: data.namaLengkap || 'Pengguna Baru',
+      role: data.role || 'operator_ptsp',
+      seksi: data.seksi,
+      jabatan: data.jabatan || 'Staf Pelaksana',
+      nip: data.nip || '-',
+      email: data.email || 'user@kemenag.go.id',
+      telepon: data.telepon || '081200000000',
+      statusAktif: true,
+      lastLogin: 'Belum pernah login',
+      avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      badgeLabel: data.badgeLabel || 'Operator Sistem',
+      badgeColor: data.badgeColor || 'bg-blue-100 text-blue-800 border-blue-300',
+      deskripsiTugas: data.deskripsiTugas || 'Bertugas memproses layanan operasional Kemenag Murung Raya.'
+    };
+    setDaftarAkun(prev => [newAkun, ...prev]);
+    soundService.playNotification();
+  };
+
+  const editAkun = (id: string, data: Partial<AkunPengguna>) => {
+    setDaftarAkun(prev => prev.map(a => a.id === id ? { ...a, ...data } : a));
+    soundService.playNotification();
+  };
+
+  const hapusAkun = (id: string) => {
+    setDaftarAkun(prev => prev.filter(a => a.id !== id));
+  };
+
+  const toggleStatusAkun = (id: string) => {
+    setDaftarAkun(prev => prev.map(a => a.id === id ? { ...a, statusAktif: !a.statusAktif } : a));
+  };
+
+  // Berita Handlers
+  const tambahBerita = (data: Partial<BeritaItem>) => {
+    const newId = 'news-' + Date.now();
+    const newBerita: BeritaItem = {
+      id: newId,
+      judul: data.judul || 'Berita Baru Kementerian Agama Kabupaten Murung Raya',
+      ringkasan: data.ringkasan || 'Informasi terbaru seputar kegiatan dan layanan keagamaan.',
+      kategori: data.kategori || 'PTSP & Layanan',
+      tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+      penulis: data.penulis || 'Humas Kemenag Murung Raya',
+      dibaca: 1,
+      gambarUrl: data.gambarUrl || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop&q=80',
+      isiLengkap: data.isiLengkap || 'Pelaksanaan kegiatan resmi di lingkungan Kantor Kementerian Agama Kabupaten Murung Raya berjalan lancar dan tertib.'
+    };
+    setDaftarBerita(prev => [newBerita, ...prev]);
+    soundService.playNotification();
+  };
+
+  const editBerita = (id: string, data: Partial<BeritaItem>) => {
+    setDaftarBerita(prev => prev.map(b => b.id === id ? { ...b, ...data } : b));
+    soundService.playNotification();
+  };
+
+  const hapusBerita = (id: string) => {
+    setDaftarBerita(prev => prev.filter(b => b.id !== id));
+    soundService.playNotification();
+  };
+
+  // Katalog Layanan Handlers (Direct CRUD from Beranda PTSP)
+  const tambahLayanan = (data: Partial<LayananKatalog>) => {
+    const newId = 'layanan-' + Date.now();
+    const newLayanan: LayananKatalog = {
+      id: newId,
+      kode: data.kode || `LAY-${Math.floor(100 + Math.random() * 900)}`,
+      seksi: data.seksi || 'pendis',
+      namaLayanan: data.namaLayanan || 'Layanan Baru PTSP',
+      deskripsi: data.deskripsi || 'Deskripsi perizinan / rekomendasi dinas Kementerian Agama Kabupaten Murung Raya.',
+      estimasiHari: data.estimasiHari ?? 3,
+      biaya: data.biaya ?? 0,
+      dasarHukum: data.dasarHukum || 'PMA RI & Standar Operasional Prosedur PTSP',
+      outputDokumen: data.outputDokumen || 'Surat Rekomendasi Resmi TTE BSrE',
+      dokumenSyarat: data.dokumenSyarat && data.dokumenSyarat.length > 0 ? data.dokumenSyarat : [
+        'Surat Permohonan Resmi ditujukan ke Kepala Kantor',
+        'Fotokopi KTP Pemohon / Penanggung Jawab',
+        'Dokumen Proposal / Berkas Pendukung Lengkap'
+      ]
+    };
+    setKatalogLayanan(prev => [newLayanan, ...prev]);
+    soundService.playNotification();
+  };
+
+  const editLayanan = (id: string, data: Partial<LayananKatalog>) => {
+    setKatalogLayanan(prev => prev.map(l => l.id === id ? { ...l, ...data } : l));
+    soundService.playNotification();
+  };
+
+  const hapusLayanan = (id: string) => {
+    setKatalogLayanan(prev => prev.filter(l => l.id !== id));
+    soundService.playNotification();
+  };
+
+  // Riwayat Kepala Kantor Handlers (Direct CRUD from Beranda PTSP)
+  const tambahKepalaKantor = (data: Partial<KepalaKantorHistory>) => {
+    const newId = 'kk-' + Date.now();
+    const nextUrutan = data.urutan ?? (dataKepalaKantor.length + 1);
+    const newKK: KepalaKantorHistory = {
+      id: newId,
+      urutan: nextUrutan,
+      nama: data.nama || 'Nama Pejabat Baru',
+      gelar: data.gelar || 'M.Pd.I',
+      periode: data.periode || `${new Date().getFullYear()} - Sekarang`,
+      tahunMulai: data.tahunMulai || new Date().getFullYear(),
+      tahunSelesai: data.tahunSelesai ?? 'Sekarang',
+      status: data.status || 'Menjabat (Aktif)',
+      prestasi: data.prestasi || 'Inovasi Digitalisasi Pelayanan Terpadu Satu Pintu',
+      fotoUrl: data.fotoUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+      nip: data.nip || '19750101 200003 1 001'
+    };
+    setDataKepalaKantor(prev => [...prev, newKK]);
+    soundService.playNotification();
+  };
+
+  const editKepalaKantor = (id: string, data: Partial<KepalaKantorHistory>) => {
+    setDataKepalaKantor(prev => prev.map(k => k.id === id ? { ...k, ...data } : k));
+    soundService.playNotification();
+  };
+
+  const hapusKepalaKantor = (id: string) => {
+    setDataKepalaKantor(prev => prev.filter(k => k.id !== id));
+    soundService.playNotification();
+  };
+
+  // Menu Aplikasi Web Handlers (Direct CRUD from Beranda PTSP)
+  const tambahMenuAplikasi = (data: Partial<MenuAplikasiWeb>) => {
+    const newId = 'app-' + Date.now();
+    const nextUrutan = data.urutan ?? (daftarMenuAplikasi.length + 1);
+    const newApp: MenuAplikasiWeb = {
+      id: newId,
+      namaAplikasi: data.namaAplikasi || 'Portal Web / Aplikasi Kemenag',
+      singkatan: data.singkatan || 'PORTAL',
+      kategori: data.kategori || 'portal_utama',
+      deskripsi: data.deskripsi || 'Aplikasi dan layanan digital resmi Kementerian Agama Kabupaten Murung Raya.',
+      url: data.url || 'https://murungraya.kemenag.go.id',
+      badgeText: data.badgeText || 'Aplikasi Resmi',
+      warnaTema: data.warnaTema || 'emerald',
+      ikon: data.ikon || 'Globe',
+      statusAktif: data.statusAktif ?? true,
+      bukaTabBaru: data.bukaTabBaru ?? true,
+      urutan: nextUrutan
+    };
+    setDaftarMenuAplikasi(prev => [newApp, ...prev]);
+    soundService.playNotification();
+  };
+
+  const editMenuAplikasi = (id: string, data: Partial<MenuAplikasiWeb>) => {
+    setDaftarMenuAplikasi(prev => prev.map(a => a.id === id ? { ...a, ...data } : a));
+    soundService.playNotification();
+  };
+
+  const hapusMenuAplikasi = (id: string) => {
+    setDaftarMenuAplikasi(prev => prev.filter(a => a.id !== id));
+    soundService.playNotification();
+  };
+
+  const updatePengaturanWeb = (data: Partial<PengaturanWeb>) => {
+    setPengaturanWeb(prev => ({ ...prev, ...data }));
+    soundService.playNotification();
+  };
 
   const toggleSound = () => {
     const newState = !soundEnabled;
@@ -479,6 +762,29 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toggleSound,
         selectedTrackingResi,
         setSelectedTrackingResi,
+        daftarAkun,
+        tambahAkun,
+        editAkun,
+        hapusAkun,
+        toggleStatusAkun,
+        daftarBerita,
+        tambahBerita,
+        editBerita,
+        hapusBerita,
+        katalogLayanan,
+        tambahLayanan,
+        editLayanan,
+        hapusLayanan,
+        dataKepalaKantor,
+        tambahKepalaKantor,
+        editKepalaKantor,
+        hapusKepalaKantor,
+        daftarMenuAplikasi,
+        tambahMenuAplikasi,
+        editMenuAplikasi,
+        hapusMenuAplikasi,
+        pengaturanWeb,
+        updatePengaturanWeb,
         tambahPermohonan,
         operatorValidasiBerkas,
         seksiReviewPermohonan,

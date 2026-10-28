@@ -1,6 +1,6 @@
 {
   "name": "PTSP Online Kemenag MURA",
-  "description": "Sistem Pelayanan Terpadu Satu Pintu Kantor Kementerian Agama Kabupaten Musi Rawas dengan Pelacakan Real-time, TTE Digital, dan Integrasi Seksi",
+  "description": "Sistem Pelayanan Terpadu Satu Pintu Kantor Kementerian Agama Kabupaten Murung Raya dengan Pelacakan Real-time, TTE Digital, dan Integrasi Seksi",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
