@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { usePTSP } from '../../context/PTSPContext';
-import { DAFTAR_AKUN_SISTEM } from '../../data/initialData';
 import { UserRole } from '../../types/ptsp';
 import { 
   Users, 
@@ -13,7 +12,11 @@ import {
   GraduationCap, 
   Landmark, 
   Cross, 
-  Flame 
+  Flame,
+  LogIn,
+  LogOut,
+  Crown,
+  KeyRound
 } from 'lucide-react';
 
 interface AccountSwitcherModalProps {
@@ -22,96 +25,153 @@ interface AccountSwitcherModalProps {
 }
 
 export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOpen, onClose }) => {
-  const { currentRole, setCurrentRole, setActiveView, setSelectedSeksiTab, daftarAkun } = usePTSP();
-  const [selectedAccRole, setSelectedAccRole] = useState<UserRole>(currentRole);
+  const { 
+    currentRole, 
+    daftarAkun,
+    loginAsStaff,
+    logoutToPublic
+  } = usePTSP();
+
+  const [activeTab, setActiveTab] = useState<'semua' | 'operator' | 'seksi' | 'pimpinan'>('semua');
 
   if (!isOpen) return null;
 
   const handleSelectAccount = (role: UserRole) => {
-    setCurrentRole(role);
-    setSelectedAccRole(role);
-
-    // Auto-navigate to appropriate view based on role
-    if (role === 'super_admin') {
-      setActiveView('super_admin_portal');
-    } else if (role === 'pemohon') {
-      setActiveView('public_portal');
-    } else if (role === 'operator_ptsp') {
-      setActiveView('operator_portal');
-    } else if (role === 'kasi_pendis') {
-      setSelectedSeksiTab('pendis');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'kasi_bimas_islam') {
-      setSelectedSeksiTab('bimas_islam');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'penyelenggara_kristen') {
-      setSelectedSeksiTab('bimas_kristen');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'penyelenggara_hindu') {
-      setSelectedSeksiTab('bimas_hindu');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'kasubbag_kepegawaian') {
-      setSelectedSeksiTab('kepegawaian');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'kepala_kantor') {
-      setActiveView('kakan_tte');
+    if (role === 'pemohon') {
+      logoutToPublic();
+    } else {
+      loginAsStaff(role);
     }
-
     onClose();
   };
 
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
-      case 'super_admin': return <ShieldCheck className="w-5 h-5 text-red-600" />;
-      case 'pemohon': return <Users className="w-5 h-5 text-emerald-600" />;
-      case 'operator_ptsp': return <Briefcase className="w-5 h-5 text-blue-600" />;
-      case 'kasi_pendis': return <GraduationCap className="w-5 h-5 text-emerald-600" />;
-      case 'kasi_bimas_islam': return <Landmark className="w-5 h-5 text-teal-600" />;
-      case 'penyelenggara_kristen': return <Cross className="w-5 h-5 text-indigo-600" />;
-      case 'penyelenggara_hindu': return <Flame className="w-5 h-5 text-amber-600" />;
-      case 'kasubbag_kepegawaian': return <Building2 className="w-5 h-5 text-purple-600" />;
-      case 'kepala_kantor': return <ShieldCheck className="w-5 h-5 text-rose-600" />;
+      case 'super_admin': return <Crown className="w-4 h-4 text-amber-500" />;
+      case 'pemohon': return <Users className="w-4 h-4 text-emerald-600" />;
+      case 'operator_ptsp': return <Briefcase className="w-4 h-4 text-blue-600" />;
+      case 'kasi_pendis': return <GraduationCap className="w-4 h-4 text-emerald-600" />;
+      case 'kasi_bimas_islam': return <Landmark className="w-4 h-4 text-teal-600" />;
+      case 'penyelenggara_kristen': return <Cross className="w-4 h-4 text-indigo-600" />;
+      case 'penyelenggara_hindu': return <Flame className="w-4 h-4 text-amber-600" />;
+      case 'kasubbag_kepegawaian': return <Building2 className="w-4 h-4 text-purple-600" />;
+      case 'kepala_kantor': return <ShieldCheck className="w-4 h-4 text-rose-600" />;
     }
   };
 
+  const staffAccounts = daftarAkun.filter(a => a.role !== 'pemohon');
+
+  const filteredAccounts = staffAccounts.filter(acc => {
+    if (activeTab === 'operator') return acc.role === 'operator_ptsp';
+    if (activeTab === 'seksi') {
+      return ['kasi_pendis', 'kasi_bimas_islam', 'penyelenggara_kristen', 'penyelenggara_hindu', 'kasubbag_kepegawaian'].includes(acc.role);
+    }
+    if (activeTab === 'pimpinan') {
+      return acc.role === 'kepala_kantor' || acc.role === 'super_admin';
+    }
+    return true;
+  });
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="bg-linear-to-r from-emerald-800 to-emerald-950 p-5 text-white flex items-center justify-between">
+        <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-emerald-950 p-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
-              <UserCheck className="w-6 h-6 text-emerald-300" />
+            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20 text-emerald-300">
+              <KeyRound className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-white">Beralih Akun & Hak Akses PTSP</h3>
-              <p className="text-xs text-emerald-200">Pilih role petugas atau pemohon untuk menguji seluruh alur pelayanan</p>
+              <div className="flex items-center gap-2">
+                <h3 className="font-black text-base sm:text-lg text-white">
+                  Akses Masuk Petugas & ASN Kemenag
+                </h3>
+                <span className="text-[10px] bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-400/30 font-bold">
+                  Internal PTSP
+                </span>
+              </div>
+              <p className="text-xs text-emerald-200/90 mt-0.5">
+                Masyarakat umum dapat mengakses layanan langsung tanpa akun login. Panel ini khusus operasional dinas ASN.
+              </p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content list */}
-        <div className="p-5 overflow-y-auto space-y-3 divide-y divide-slate-100 flex-1">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider pb-1">
-            Akun Sistem Terdaftar (Kemenag Kab. Murung Raya)
+        {/* Public vs Staff State Banner */}
+        <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs text-slate-700">
+              Status Anda saat ini:{' '}
+              <span className="font-black text-slate-900">
+                {currentRole === 'pemohon' ? 'Pengguna Publik (Masyarakat Umum)' : currentRole.replace(/_/g, ' ').toUpperCase()}
+              </span>
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-            {daftarAkun.map((acc) => {
+          {currentRole !== 'pemohon' ? (
+            <button
+              onClick={() => {
+                logoutToPublic();
+                onClose();
+              }}
+              className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Keluar ke Mode Publik</span>
+            </button>
+          ) : (
+            <div className="text-[11px] text-emerald-700 font-bold bg-emerald-100/70 border border-emerald-300 px-2.5 py-1 rounded-lg">
+              ✓ Akses Publik Aktif (Bebas Akses Tanpa Login)
+            </div>
+          )}
+        </div>
+
+        {/* Category Tabs */}
+        <div className="px-5 pt-3 pb-2 border-b border-slate-100 flex items-center gap-2 overflow-x-auto scrollbar-none">
+          {[
+            { id: 'semua', label: 'Semua Akun Dinas', count: staffAccounts.length },
+            { id: 'operator', label: 'Operator Front Office', count: staffAccounts.filter(a => a.role === 'operator_ptsp').length },
+            { id: 'seksi', label: 'Seksi Teknis (Pendis/Bimas/TU)', count: staffAccounts.filter(a => ['kasi_pendis', 'kasi_bimas_islam', 'penyelenggara_kristen', 'penyelenggara_hindu', 'kasubbag_kepegawaian'].includes(a.role)).length },
+            { id: 'pimpinan', label: 'Pimpinan & Super Admin', count: staffAccounts.filter(a => a.role === 'kepala_kantor' || a.role === 'super_admin').length },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === tab.id
+                  ? 'bg-emerald-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                activeTab === tab.id ? 'bg-emerald-950 text-emerald-200' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Content list */}
+        <div className="p-5 overflow-y-auto space-y-3 flex-1 max-h-[50vh]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {filteredAccounts.map((acc) => {
               const isCurrent = currentRole === acc.role;
               return (
                 <div
                   key={acc.id}
                   onClick={() => handleSelectAccount(acc.role)}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between hover:shadow-md ${
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between hover:shadow-md ${
                     isCurrent 
-                      ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-600/20 shadow-xs' 
+                      ? 'border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-600/20 shadow-xs' 
                       : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50/70'
                   }`}
                 >
@@ -123,39 +183,39 @@ export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOp
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${acc.badgeColor}`}>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${acc.badgeColor}`}>
                           {acc.badgeLabel}
                         </span>
                         {isCurrent && (
-                          <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
-                            <Check className="w-3.5 h-3.5" /> Aktif
+                          <span className="flex items-center gap-1 text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                            <Check className="w-3 h-3 text-emerald-600" /> Sedang Aktif
                           </span>
                         )}
                       </div>
-                      <h4 className="font-bold text-sm text-slate-900 truncate">{acc.namaLengkap}</h4>
-                      <p className="text-xs text-slate-600 font-medium truncate">{acc.jabatan}</p>
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate">{acc.namaLengkap}</h4>
+                      <p className="text-[11px] text-slate-600 font-medium truncate">{acc.jabatan}</p>
                       {acc.nip && (
-                        <p className="text-[11px] text-slate-500 font-mono">NIP: {acc.nip}</p>
+                        <p className="text-[10px] text-slate-500 font-mono">NIP: {acc.nip}</p>
                       )}
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-slate-600 mt-2 line-clamp-2 bg-white/70 p-1.5 rounded border border-slate-100">
+                  <p className="text-[11px] text-slate-600 mt-2 line-clamp-2 bg-white/80 p-2 rounded-xl border border-slate-100">
                     {acc.deskripsiTugas}
                   </p>
 
                   <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-500 font-mono">@{acc.username}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">@{acc.username}</span>
                     <button 
                       type="button"
-                      className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors flex items-center gap-1 ${
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs ${
                         isCurrent 
-                          ? 'bg-emerald-600 text-white' 
-                          : 'bg-slate-100 text-slate-700 hover:bg-emerald-600 hover:text-white'
+                          ? 'bg-emerald-700 text-white' 
+                          : 'bg-emerald-50 hover:bg-emerald-600 text-emerald-900 hover:text-white border border-emerald-200 hover:border-emerald-600'
                       }`}
                     >
                       {getRoleIcon(acc.role)}
-                      {isCurrent ? 'Sedang Digunakan' : 'Gunakan Akun'}
+                      <span>{isCurrent ? 'Akun Aktif' : 'Masuk Akun Ini'}</span>
                     </button>
                   </div>
                 </div>
@@ -165,11 +225,13 @@ export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOp
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
-          <span>*Seluruh akun dilengkapi hak akses instan untuk memverifikasi proses approval dokumen & TTE</span>
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+          <span className="text-[11px]">
+            *Pengguna publik/warga tidak memerlukan login untuk mengajukan permohonan dan mengecek resi.
+          </span>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition-colors cursor-pointer text-xs"
           >
             Tutup
           </button>
@@ -178,3 +240,4 @@ export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOp
     </div>
   );
 };
+

@@ -26,11 +26,13 @@ import {
   ShieldCheck, 
   Heart, 
   ExternalLink,
-  Crown
+  Crown,
+  Lock,
+  ArrowLeft
 } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { activeView, setActiveView, pengaturanWeb } = usePTSP();
+  const { currentRole, activeView, setActiveView, pengaturanWeb } = usePTSP();
 
   // Modal states
   const [isPermohonanModalOpen, setIsPermohonanModalOpen] = useState(false);
@@ -62,25 +64,6 @@ const MainAppContent: React.FC = () => {
           />
         )}
 
-        {activeView === 'operator_portal' && (
-          <OperatorPTSPView
-            onPrintReceipt={(p) => setPrintedReceiptPermohonan(p)}
-            onPreviewOfficialDocument={(p) => setPreviewDocumentPermohonan(p)}
-          />
-        )}
-
-        {activeView === 'seksi_dashboard' && (
-          <SeksiDashboardView
-            onPreviewOfficialDocument={(p) => setPreviewDocumentPermohonan(p)}
-          />
-        )}
-
-        {activeView === 'kakan_tte' && (
-          <PimpinanTTEView
-            onPreviewOfficialDocument={(p) => setPreviewDocumentPermohonan(p)}
-          />
-        )}
-
         {activeView === 'tracking_view' && (
           <TrackingView
             onPrintReceipt={(p) => setPrintedReceiptPermohonan(p)}
@@ -89,7 +72,51 @@ const MainAppContent: React.FC = () => {
           />
         )}
 
-        {activeView === 'super_admin_portal' && (
+        {/* Akses Khusus Petugas - Jika pengguna publik mengakses URL / view internal */}
+        {currentRole === 'pemohon' && ['operator_portal', 'seksi_dashboard', 'kakan_tte', 'super_admin_portal'].includes(activeView) && (
+          <div className="max-w-xl mx-auto my-16 px-4">
+            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-8 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
+                <Lock className="w-8 h-8" />
+              </div>
+              <h2 className="text-xl font-black text-slate-900 mb-2">
+                Menu Terbatas: Khusus Petugas & ASN Kemenag
+              </h2>
+              <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                Menu ini merupakan dashboard operasional internal bagi petugas PTSP, seksi teknis, dan pimpinan kantor. Pengguna publik / masyarakat umum dapat menikmati seluruh layanan perizinan dan pelacakan status secara langsung di Beranda tanpa perlu akun login.
+              </p>
+              <button
+                onClick={() => setActiveView('public_portal')}
+                className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Kembali ke Beranda Publik</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tampilan Internal Petugas (Operator, Seksi, Kakan, Super Admin) */}
+        {currentRole !== 'pemohon' && activeView === 'operator_portal' && (
+          <OperatorPTSPView
+            onPrintReceipt={(p) => setPrintedReceiptPermohonan(p)}
+            onPreviewOfficialDocument={(p) => setPreviewDocumentPermohonan(p)}
+          />
+        )}
+
+        {currentRole !== 'pemohon' && activeView === 'seksi_dashboard' && (
+          <SeksiDashboardView
+            onPreviewOfficialDocument={(p) => setPreviewDocumentPermohonan(p)}
+          />
+        )}
+
+        {currentRole !== 'pemohon' && activeView === 'kakan_tte' && (
+          <PimpinanTTEView
+            onPreviewOfficialDocument={(p) => setPreviewDocumentPermohonan(p)}
+          />
+        )}
+
+        {currentRole !== 'pemohon' && activeView === 'super_admin_portal' && (
           <SuperAdminPortal />
         )}
       </main>

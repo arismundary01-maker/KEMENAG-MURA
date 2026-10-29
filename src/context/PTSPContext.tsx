@@ -84,6 +84,10 @@ interface PTSPContextType {
   pengaturanWeb: PengaturanWeb;
   updatePengaturanWeb: (data: Partial<PengaturanWeb>) => void;
 
+  // Session & Authentication
+  logoutToPublic: () => void;
+  loginAsStaff: (role: UserRole) => void;
+
   // Actions
   tambahPermohonan: (data: Partial<Permohonan>) => string;
   operatorValidasiBerkas: (
@@ -128,8 +132,24 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return INITIAL_PERMOHONAN;
   });
 
-  const [currentRole, setCurrentRole] = useState<UserRole>('super_admin');
-  const [activeView, setActiveView] = useState<'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier' | 'super_admin_portal'>('super_admin_portal');
+  // Default: 'pemohon' (pengguna publik / masyarakat umum) tanpa perlu login
+  const [currentRole, setCurrentRole] = useState<UserRole>(() => {
+    const saved = localStorage.getItem('kemenag_mura_user_role');
+    if (saved && saved !== 'pemohon') {
+      return saved as UserRole;
+    }
+    return 'pemohon';
+  });
+
+  const [activeView, setActiveView] = useState<'public_portal' | 'operator_portal' | 'seksi_dashboard' | 'kakan_tte' | 'tracking_view' | 'tte_verifier' | 'super_admin_portal'>(() => {
+    const savedRole = localStorage.getItem('kemenag_mura_user_role');
+    const savedView = localStorage.getItem('kemenag_mura_active_view');
+    if (savedRole && savedRole !== 'pemohon' && savedView) {
+      return savedView as any;
+    }
+    return 'public_portal';
+  });
+
   const [selectedSeksiTab, setSelectedSeksiTab] = useState<SeksiType>('pendis');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [selectedTrackingResi, setSelectedTrackingResi] = useState<string | null>(null);
@@ -409,6 +429,48 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updatePengaturanWeb = (data: Partial<PengaturanWeb>) => {
     setPengaturanWeb(prev => ({ ...prev, ...data }));
     soundService.playNotification();
+  };
+
+  // Session & Authentication Handlers
+  const logoutToPublic = () => {
+    setCurrentRole('pemohon');
+    setActiveView('public_portal');
+    localStorage.removeItem('kemenag_mura_user_role');
+    localStorage.removeItem('kemenag_mura_active_view');
+    triggerRealTimeNotification(
+      'Mode Publik Aktif',
+      'Anda telah kembali ke tampilan publik masyarakat umum tanpa login.',
+      'info'
+    );
+  };
+
+  const loginAsStaff = (role: UserRole) => {
+    setCurrentRole(role);
+    localStorage.setItem('kemenag_mura_user_role', role);
+
+    if (role === 'operator_ptsp') {
+      setActiveView('operator_portal');
+    } else if (role === 'kepala_kantor') {
+      setActiveView('kakan_tte');
+    } else if (role === 'super_admin') {
+      setActiveView('super_admin_portal');
+    } else if (role === 'pemohon') {
+      setActiveView('public_portal');
+    } else {
+      // Seksi technical roles
+      if (role === 'kasi_pendis') setSelectedSeksiTab('pendis');
+      else if (role === 'kasi_bimas_islam') setSelectedSeksiTab('bimas_islam');
+      else if (role === 'penyelenggara_kristen') setSelectedSeksiTab('bimas_kristen');
+      else if (role === 'penyelenggara_hindu') setSelectedSeksiTab('bimas_hindu');
+      else if (role === 'kasubbag_kepegawaian') setSelectedSeksiTab('kepegawaian');
+      setActiveView('seksi_dashboard');
+    }
+
+    triggerRealTimeNotification(
+      'Login Petugas Berhasil',
+      `Hak akses untuk peran ${role.replace(/_/g, ' ').toUpperCase()} telah aktif.`,
+      'sukses'
+    );
   };
 
   const toggleSound = () => {
@@ -785,6 +847,8 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hapusMenuAplikasi,
         pengaturanWeb,
         updatePengaturanWeb,
+        logoutToPublic,
+        loginAsStaff,
         tambahPermohonan,
         operatorValidasiBerkas,
         seksiReviewPermohonan,
