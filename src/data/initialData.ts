@@ -43,6 +43,19 @@ export const SEKSI_CONFIG: Record<SeksiType, { nama: string; singkatan: string; 
   }
 };
 
+export const ROLE_TO_SEKSI_MAP: Partial<Record<import('../types/ptsp').UserRole, SeksiType>> = {
+  kasi_pendis: 'pendis',
+  kasi_bimas_islam: 'bimas_islam',
+  penyelenggara_kristen: 'bimas_kristen',
+  penyelenggara_hindu: 'bimas_hindu',
+  kasubbag_kepegawaian: 'kepegawaian'
+};
+
+export const getSeksiByRole = (role: import('../types/ptsp').UserRole): SeksiType | null => {
+  return ROLE_TO_SEKSI_MAP[role] || null;
+};
+
+
 export const KATALOG_LAYANAN: LayananKatalog[] = [
   // PENDIS - Dikhususkan untuk IJOP Madrasah, IJOP Pontren, dan IJOP LPQ/MDT dengan Link Integrasi Resmi Kemenag
   {
@@ -532,7 +545,27 @@ export const INITIAL_PERMOHONAN: Permohonan[] = [
         'Kepala KUA Kecamatan Megang Sakti',
         'Pengurus BKM Masjid Nurul Iman'
       ],
-      peruntukan: 'Masjid Nurul Iman Megang Sakti'
+      peruntukan: 'Masjid Nurul Iman Megang Sakti',
+      berkasDraftTTE: {
+        id: 'draft-bim-002',
+        namaFile: 'Draft_Surat_Rekomendasi_Bantuan_Masjid_NurulIman.pdf',
+        ukuranFile: '1.2 MB',
+        tipeFile: 'application/pdf',
+        waktuUnggah: '2026-10-23 08:00',
+        diunggahOleh: 'H. Muhammad Ridwan, S.Ag., M.H (Kasi Bimas Islam)',
+        seksi: 'bimas_islam',
+        catatanPengantar: 'Naskah dinas rekomendasi telah ditelaah dan diverifikasi fisik lapangan. Siap di-TTE Kepala Kantor.'
+      }
+    },
+    berkasDraftTTE: {
+      id: 'draft-bim-002',
+      namaFile: 'Draft_Surat_Rekomendasi_Bantuan_Masjid_NurulIman.pdf',
+      ukuranFile: '1.2 MB',
+      tipeFile: 'application/pdf',
+      waktuUnggah: '2026-10-23 08:00',
+      diunggahOleh: 'H. Muhammad Ridwan, S.Ag., M.H (Kasi Bimas Islam)',
+      seksi: 'bimas_islam',
+      catatanPengantar: 'Naskah dinas rekomendasi telah ditelaah dan diverifikasi fisik lapangan. Siap di-TTE Kepala Kantor.'
     }
   },
   {

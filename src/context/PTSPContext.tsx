@@ -11,7 +11,8 @@ import {
   PengaturanWeb,
   LayananKatalog,
   KepalaKantorHistory,
-  MenuAplikasiWeb
+  MenuAplikasiWeb,
+  BerkasDraftTTE
 } from '../types/ptsp';
 import { 
   INITIAL_PERMOHONAN, 
@@ -20,7 +21,8 @@ import {
   PENGATURAN_WEB_DEFAULT,
   KATALOG_LAYANAN,
   DATA_KEPALA_KANTOR,
-  MENU_APLIKASI_WEB_DEFAULT
+  MENU_APLIKASI_WEB_DEFAULT,
+  getSeksiByRole
 } from '../data/initialData';
 import { soundService } from '../services/soundNotification';
 import confetti from 'canvas-confetti';
@@ -100,8 +102,18 @@ interface PTSPContextType {
     nomorResi: string,
     status: 'siap_tte' | 'perlu_revisi' | 'telaah_seksi',
     catatan: string,
-    draftSurat?: Permohonan['isiDokumenKeluaran']
+    draftSurat?: Permohonan['isiDokumenKeluaran'],
+    berkasDraftTTE?: BerkasDraftTTE
   ) => void;
+  unggahBerkasTTELangsung: (data: {
+    seksi: SeksiType;
+    judul: string;
+    nomorSurat: string;
+    perihal: string;
+    peruntukan: string;
+    berkas: BerkasDraftTTE;
+    catatan?: string;
+  }) => string;
   eksekusiTTE: (
     nomorResi: string,
     passphrase: string,
@@ -150,7 +162,16 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return 'public_portal';
   });
 
-  const [selectedSeksiTab, setSelectedSeksiTab] = useState<SeksiType>('pendis');
+  const [selectedSeksiTab, setSelectedSeksiTab] = useState<SeksiType>(() => {
+    const savedRole = localStorage.getItem('kemenag_mura_user_role') as UserRole;
+    if (savedRole) {
+      const seksi = getSeksiByRole(savedRole);
+      if (seksi) return seksi;
+    }
+    const savedTab = localStorage.getItem('kemenag_mura_selected_seksi_tab');
+    if (savedTab) return savedTab as SeksiType;
+    return 'pendis';
+  });
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [selectedTrackingResi, setSelectedTrackingResi] = useState<string | null>(null);
   const [selectedPermohonanForDetail, setSelectedPermohonanForDetail] = useState<Permohonan | null>(null);
@@ -444,26 +465,38 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
+  // Automatic sync: whenever role changes to a seksi role, guarantee selectedSeksiTab matches
+  useEffect(() => {
+    const seksi = getSeksiByRole(currentRole);
+    if (seksi) {
+      setSelectedSeksiTab(seksi);
+      localStorage.setItem('kemenag_mura_selected_seksi_tab', seksi);
+    }
+  }, [currentRole]);
+
   const loginAsStaff = (role: UserRole) => {
     setCurrentRole(role);
     localStorage.setItem('kemenag_mura_user_role', role);
 
     if (role === 'operator_ptsp') {
       setActiveView('operator_portal');
+      localStorage.setItem('kemenag_mura_active_view', 'operator_portal');
     } else if (role === 'kepala_kantor') {
       setActiveView('kakan_tte');
+      localStorage.setItem('kemenag_mura_active_view', 'kakan_tte');
     } else if (role === 'super_admin') {
       setActiveView('super_admin_portal');
+      localStorage.setItem('kemenag_mura_active_view', 'super_admin_portal');
     } else if (role === 'pemohon') {
       setActiveView('public_portal');
+      localStorage.setItem('kemenag_mura_active_view', 'public_portal');
     } else {
-      // Seksi technical roles
-      if (role === 'kasi_pendis') setSelectedSeksiTab('pendis');
-      else if (role === 'kasi_bimas_islam') setSelectedSeksiTab('bimas_islam');
-      else if (role === 'penyelenggara_kristen') setSelectedSeksiTab('bimas_kristen');
-      else if (role === 'penyelenggara_hindu') setSelectedSeksiTab('bimas_hindu');
-      else if (role === 'kasubbag_kepegawaian') setSelectedSeksiTab('kepegawaian');
+      // Seksi technical roles: automatically set tab & view strictly to that seksi
+      const seksi = getSeksiByRole(role) || 'pendis';
+      setSelectedSeksiTab(seksi);
+      localStorage.setItem('kemenag_mura_selected_seksi_tab', seksi);
       setActiveView('seksi_dashboard');
+      localStorage.setItem('kemenag_mura_active_view', 'seksi_dashboard');
     }
 
     triggerRealTimeNotification(
@@ -545,9 +578,9 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
         nik: '1605000000000000',
         noHpWhatsapp: '081200000000',
         email: 'pemohon@kemenagmura.go.id',
-        alamat: 'Kabupaten Musi Rawas',
-        kecamatan: 'Muara Beliti',
-        kabupaten: 'Musi Rawas'
+        alamat: 'Jl. Jenderal Sudirman No. 12, Puruk Cahu',
+        kecamatan: 'Murung',
+        kabupaten: 'Kabupaten Murung Raya'
       },
       perihal: data.perihal || 'Permohonan Layanan PTSP',
       catatanPemohon: data.catatanPemohon || '',
@@ -558,7 +591,7 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: 'h-' + Date.now(),
           status: 'diajukan',
           judul: 'Permohonan Didaftarkan Online',
-          keterangan: 'Berkas permohonan berhasil didaftarkan ke sistem PTSP Online Kemenag Mura.',
+          keterangan: 'Berkas permohonan berhasil didaftarkan ke sistem PTSP Online Kemenag Murung Raya.',
           aktor: data.pemohon?.namaLengkap || 'Pemohon',
           role: 'pemohon',
           waktu: nowStr
@@ -568,7 +601,7 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isSigned: false,
         namaPenandatangan: 'Dr. H. Hermadi, S.Ag., M.Si',
         nip: '197004121996031001',
-        jabatan: 'Kepala Kantor Kementerian Agama Kab. Musi Rawas',
+        jabatan: 'Kepala Kantor Kementerian Agama Kab. Murung Raya',
         tanggalTTE: '',
         nomorDokumen: '',
         sertifikatOtoritas: 'Balai Sertifikasi Elektronik (BSrE) - BSSN',
@@ -650,7 +683,8 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
     nomorResi: string,
     status: 'siap_tte' | 'perlu_revisi' | 'telaah_seksi',
     catatan: string,
-    draftSurat?: Permohonan['isiDokumenKeluaran']
+    draftSurat?: Permohonan['isiDokumenKeluaran'],
+    berkasDraftTTE?: BerkasDraftTTE
   ) => {
     const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
     let judulHistory = '';
@@ -658,7 +692,9 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (status === 'siap_tte') {
       judulHistory = 'Telaah Seksi Disetujui - Siap TTE';
-      keteranganHistory = `Naskah surat resmi dan telaah teknis disetujui. Diteruskan ke Kepala Kantor untuk Tanda Tangan Elektronik (TTE BSrE).`;
+      keteranganHistory = berkasDraftTTE 
+        ? `Naskah surat dinas dan berkas lampiran (${berkasDraftTTE.namaFile}, ${berkasDraftTTE.ukuranFile}) telah disetujui seksi teknis. Diteruskan ke Operator PTSP & Kepala Kantor untuk Tanda Tangan Elektronik (TTE BSrE).`
+        : `Naskah surat resmi dan telaah teknis disetujui. Diteruskan ke Kepala Kantor untuk Tanda Tangan Elektronik (TTE BSrE).`;
     } else if (status === 'perlu_revisi') {
       judulHistory = 'Permintaan Revisi Teknis Seksi';
       keteranganHistory = `Tim teknis seksi meminta dokumen pelengkap: ${catatan}`;
@@ -669,11 +705,22 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setPermohonanList(prev => prev.map(item => {
       if (item.nomorResi !== nomorResi) return item;
+
+      // Update isiDokumenKeluaran with berkas if provided
+      const updatedDokumenKeluaran = draftSurat ? {
+        ...draftSurat,
+        berkasDraftTTE: berkasDraftTTE || item.isiDokumenKeluaran?.berkasDraftTTE
+      } : item.isiDokumenKeluaran;
+
+      // Also ensure berkasDraftTTE is stored on permohonan
+      const finalBerkas = berkasDraftTTE || item.berkasDraftTTE;
+
       return {
         ...item,
         status,
         catatanSeksi: catatan,
-        isiDokumenKeluaran: draftSurat || item.isiDokumenKeluaran,
+        berkasDraftTTE: finalBerkas,
+        isiDokumenKeluaran: updatedDokumenKeluaran,
         history: [
           ...item.history,
           {
@@ -681,7 +728,7 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
             status,
             judul: judulHistory,
             keterangan: keteranganHistory,
-            aktor: 'Kepala Seksi / Penyelenggara',
+            aktor: berkasDraftTTE?.diunggahOleh || 'Kepala Seksi / Penyelenggara',
             role: (currentRole.startsWith('kasi_') || currentRole.startsWith('penyelenggara_') || currentRole.startsWith('kasubbag_')) ? currentRole : 'kasi_pendis',
             waktu: nowStr,
             catatan
@@ -692,12 +739,121 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const targetItem = permohonanList.find(p => p.nomorResi === nomorResi);
     triggerRealTimeNotification(
-      status === 'siap_tte' ? 'Dokumen Masuk Antrean TTE' : 'Update Progres Seksi',
+      status === 'siap_tte' ? 'Dokumen & Berkas Masuk Antrean TTE' : 'Update Progres Seksi',
       `Permohonan ${nomorResi}: ${keteranganHistory}`,
       status === 'siap_tte' ? 'sukses' : 'info',
       nomorResi,
       targetItem?.pemohon.noHpWhatsapp
     );
+    soundService.playNotification();
+  };
+
+  // Unggah Berkas Naskah TTE Langsung dari Seksi ke Operator & Kepala Kantor
+  const unggahBerkasTTELangsung = (data: {
+    seksi: SeksiType;
+    judul: string;
+    nomorSurat: string;
+    perihal: string;
+    peruntukan: string;
+    berkas: BerkasDraftTTE;
+    catatan?: string;
+  }): string => {
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const nomorResi = `TTE-${data.seksi.toUpperCase().substring(0, 3)}-2026-${randomNum}`;
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+    const newPermohonan: Permohonan = {
+      id: 'req-' + Date.now(),
+      nomorResi,
+      tanggalPengajuan: nowStr,
+      layananId: `lay-${data.seksi}-tte-direct`,
+      namaLayanan: data.judul || 'Naskah Dinas Siap TTE',
+      seksi: data.seksi,
+      pemohon: {
+        namaLengkap: data.peruntukan || `Pihak Terkait / Satker Seksi ${data.seksi}`,
+        nik: '1605000000000000',
+        noHpWhatsapp: '081278901234',
+        email: `${data.seksi}@kemenagmura.go.id`,
+        instansiOrLembaga: data.peruntukan,
+        alamat: 'Kantor Kementerian Agama Kabupaten Murung Raya',
+        kecamatan: 'Murung',
+        kabupaten: 'Kabupaten Murung Raya'
+      },
+      perihal: data.perihal || 'Pengajuan Naskah Dinas untuk Ditandatangani Elektronik (TTE) Kepala Kantor',
+      catatanSeksi: data.catatan || `Berkas naskah dinas diunggah oleh seksi teknis: ${data.berkas.namaFile}`,
+      dokumenList: [
+        {
+          id: 'doc-draft-tte',
+          nama: `Berkas Draft Naskah TTE (${data.berkas.namaFile})`,
+          wajib: true,
+          status: 'valid',
+          namaFile: data.berkas.namaFile,
+          ukuranFile: data.berkas.ukuranFile,
+          fileUrl: data.berkas.fileUrl,
+          catatan: 'Naskah resmi siap TTE dari seksi teknis'
+        }
+      ],
+      berkasDraftTTE: data.berkas,
+      status: 'siap_tte',
+      history: [
+        {
+          id: 'h-' + Date.now(),
+          status: 'siap_tte',
+          judul: 'Naskah Dinas Diunggah Seksi - Siap TTE',
+          keterangan: `Seksi mengunggah berkas naskah dinas "${data.berkas.namaFile}" (${data.berkas.ukuranFile}) untuk ditandatangani secara elektronik oleh Kepala Kantor. Diteruskan ke Operator PTSP & Kepala Kantor.`,
+          aktor: data.berkas.diunggahOleh || 'Staf / Pejabat Seksi',
+          role: currentRole,
+          waktu: nowStr,
+          catatan: data.catatan
+        }
+      ],
+      tteInfo: {
+        isSigned: false,
+        namaPenandatangan: 'Dr. H. Hermadi, S.Ag., M.Si',
+        nip: '197004121996031001',
+        jabatan: 'Kepala Kantor Kementerian Agama Kab. Murung Raya',
+        tanggalTTE: '',
+        nomorDokumen: data.nomorSurat || '',
+        sertifikatOtoritas: 'Balai Sertifikasi Elektronik (BSrE) - BSSN',
+        hashDokumen: '',
+        qrCodeVerificationUrl: ''
+      },
+      isiDokumenKeluaran: {
+        judul: data.judul,
+        nomorSurat: data.nomorSurat,
+        konsideranMenimbang: [
+          'Bahwa berdasarkan hasil telaah naskah dinas seksi teknis terkait;',
+          'Bahwa naskah telah memenuhi ketentuan tata naskah dinas Kementerian Agama.'
+        ],
+        konsideranMengingat: [
+          'Peraturan Menteri Agama Republik Indonesia tentang Tata Naskah Dinas;',
+          'Peraturan Menteri Agama Nomor 34 Tahun 2016 tentang Organisasi dan Tata Kerja Kementerian Agama.'
+        ],
+        diktumKeputusan: [
+          `MENETAPKAN / MENERBITKAN: ${data.judul}`,
+          `Diberikan kepada: ${data.peruntukan}. Berlaku sah secara kedinasan.`
+        ],
+        tembusan: [
+          'Kepala Kantor Kementerian Agama Kab. Murung Raya',
+          'Kepala Bagian Tata Usaha Kantor Kemenag Kab. Murung Raya',
+          'Arsip Seksi Teknis Pengunggah'
+        ],
+        peruntukan: data.peruntukan,
+        berkasDraftTTE: data.berkas
+      }
+    };
+
+    setPermohonanList(prev => [newPermohonan, ...prev]);
+
+    triggerRealTimeNotification(
+      'Naskah Siap TTE Baru Masuk',
+      `Seksi berhasil mengunggah berkas "${data.berkas.namaFile}" (${nomorResi}). Telah masuk ke antrean persetujuan TTE Kepala Kantor & Operator.`,
+      'tte',
+      nomorResi
+    );
+    soundService.playNotification();
+
+    return nomorResi;
   };
 
   // Head of Office signs with Electronic Signature (BSrE)
@@ -737,10 +893,10 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ],
         diktumKeputusan: [
           `MEMBERIKAN REKOMENDASI / KETERANGAN kepada ${item.pemohon.namaLengkap} (${item.pemohon.instansiOrLembaga || 'Pemohon'}) untuk perihal: ${item.perihal}.`,
-          'Surat ini diterbitkan secara sah melalui sistem Pelayanan Terpadu Satu Pintu (PTSP) Kemenag Kab. Musi Rawas.'
+          'Surat ini diterbitkan secara sah melalui sistem Pelayanan Terpadu Satu Pintu (PTSP) Kemenag Kab. Murung Raya.'
         ],
         tembusan: [
-          'Kepala Bagian Tata Usaha Kantor Kementerian Agama Kab. Musi Rawas',
+          'Kepala Bagian Tata Usaha Kantor Kementerian Agama Kab. Murung Raya',
           'Arsip PTSP'
         ],
         peruntukan: item.pemohon.instansiOrLembaga || item.pemohon.namaLengkap
@@ -757,7 +913,7 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isSigned: true,
           namaPenandatangan: signerName || 'Dr. H. Hermadi, S.Ag., M.Si',
           nip: nip || '197004121996031001',
-          jabatan: jabatan || 'Kepala Kantor Kementerian Agama Kab. Musi Rawas',
+          jabatan: jabatan || 'Kepala Kantor Kementerian Agama Kab. Murung Raya',
           tanggalTTE: dateFormatted,
           nomorDokumen: outputData.nomorSurat || nomorDokumenResmi,
           sertifikatOtoritas: 'Balai Sertifikasi Elektronik (BSrE) - Badan Siber dan Sandi Negara (BSSN)',
@@ -852,6 +1008,7 @@ export const PTSPProvider: React.FC<{ children: React.ReactNode }> = ({ children
         tambahPermohonan,
         operatorValidasiBerkas,
         seksiReviewPermohonan,
+        unggahBerkasTTELangsung,
         eksekusiTTE,
         whatsAppAlert,
         dismissWhatsAppAlert,

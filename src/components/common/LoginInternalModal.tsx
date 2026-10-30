@@ -24,40 +24,13 @@ interface LoginInternalModalProps {
 }
 
 export const LoginInternalModal: React.FC<LoginInternalModalProps> = ({ isOpen, onClose }) => {
-  const { currentRole, setCurrentRole, setActiveView, setSelectedSeksiTab, daftarAkun } = usePTSP();
+  const { daftarAkun, loginAsStaff, logoutToPublic } = usePTSP();
   const [selectedRole, setSelectedRole] = useState<UserRole>('operator_ptsp');
 
   if (!isOpen) return null;
 
   const handleLogin = (role: UserRole) => {
-    setCurrentRole(role);
-
-    // Direct to the authorized dashboard based on internal role
-    if (role === 'super_admin') {
-      setActiveView('super_admin_portal');
-    } else if (role === 'operator_ptsp') {
-      setActiveView('operator_portal');
-    } else if (role === 'kasi_pendis') {
-      setSelectedSeksiTab('pendis');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'kasi_bimas_islam') {
-      setSelectedSeksiTab('bimas_islam');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'penyelenggara_kristen') {
-      setSelectedSeksiTab('bimas_kristen');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'penyelenggara_hindu') {
-      setSelectedSeksiTab('bimas_hindu');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'kasubbag_kepegawaian') {
-      setSelectedSeksiTab('kepegawaian');
-      setActiveView('seksi_dashboard');
-    } else if (role === 'kepala_kantor') {
-      setActiveView('kakan_tte');
-    } else {
-      setActiveView('public_portal');
-    }
-
+    loginAsStaff(role);
     onClose();
   };
 
@@ -188,8 +161,7 @@ export const LoginInternalModal: React.FC<LoginInternalModalProps> = ({ isOpen, 
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
           <button
             onClick={() => {
-              setCurrentRole('pemohon');
-              setActiveView('public_portal');
+              logoutToPublic();
               onClose();
             }}
             className="text-xs text-slate-600 hover:text-emerald-800 font-semibold underline cursor-pointer"

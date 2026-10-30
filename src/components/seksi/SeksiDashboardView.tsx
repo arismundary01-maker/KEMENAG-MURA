@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePTSP } from '../../context/PTSPContext';
 import { 
   SEKSI_CONFIG, 
@@ -7,9 +7,10 @@ import {
   DATA_SEKSI_BIMAS_ISLAM, 
   DATA_SEKSI_BIMAS_KRISTEN, 
   DATA_SEKSI_BIMAS_HINDU, 
-  DATA_SEKSI_KEPEGAWAIAN 
+  DATA_SEKSI_KEPEGAWAIAN,
+  getSeksiByRole 
 } from '../../data/initialData';
-import { SeksiType, Permohonan, AplikasiIntegrasi } from '../../types/ptsp';
+import { SeksiType, Permohonan, AplikasiIntegrasi, BerkasDraftTTE } from '../../types/ptsp';
 import { 
   GraduationCap, 
   Landmark, 
@@ -34,7 +35,14 @@ import {
   ShieldCheck,
   ChevronRight,
   BookOpen,
-  Globe
+  Globe,
+  UploadCloud,
+  FileUp,
+  Paperclip,
+  Eye,
+  Download,
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 
 interface SeksiDashboardViewProps {
@@ -49,8 +57,18 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
     setSelectedSeksiTab, 
     permohonanList, 
     seksiReviewPermohonan, 
+    unggahBerkasTTELangsung,
     currentRole 
   } = usePTSP();
+
+  const userSeksi = getSeksiByRole(currentRole);
+
+  // Otomatis arahkan tab seksi sesuai seksi akun login
+  useEffect(() => {
+    if (userSeksi && selectedSeksiTab !== userSeksi) {
+      setSelectedSeksiTab(userSeksi);
+    }
+  }, [userSeksi, selectedSeksiTab, setSelectedSeksiTab]);
 
   // Internal tab within section
   const [activeSubTab, setActiveSubTab] = useState<'progres_layanan' | 'data_seksi' | 'integrasi_aplikasi'>('progres_layanan');
@@ -62,6 +80,17 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
   const [draftNomorSurat, setDraftNomorSurat] = useState('');
   const [draftJudul, setDraftJudul] = useState('');
   const [draftPeruntukan, setDraftPeruntukan] = useState('');
+  const [reviewUploadedFile, setReviewUploadedFile] = useState<BerkasDraftTTE | null>(null);
+
+  // Direct Upload Modal State for any Seksi
+  const [isDirectUploadModalOpen, setIsDirectUploadModalOpen] = useState(false);
+  const [directJudul, setDirectJudul] = useState('');
+  const [directNomorSurat, setDirectNomorSurat] = useState('');
+  const [directPerihal, setDirectPerihal] = useState('');
+  const [directPeruntukan, setDirectPeruntukan] = useState('');
+  const [directCatatan, setDirectCatatan] = useState('');
+  const [directUploadedFile, setDirectUploadedFile] = useState<BerkasDraftTTE | null>(null);
+  const [directError, setDirectError] = useState('');
 
   // Simulation state for app launch modal
   const [activeLaunchedApp, setActiveLaunchedApp] = useState<AplikasiIntegrasi | null>(null);
@@ -76,16 +105,77 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
   const countSiapTTE = seksiPermohonan.filter(p => p.status === 'siap_tte').length;
   const countSelesai = seksiPermohonan.filter(p => p.status === 'selesai_tte').length;
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const handleProcessUploadedFile = (
+    file: File, 
+    onSuccess: (berkas: BerkasDraftTTE) => void,
+    targetSeksi: SeksiType
+  ) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const fileUrl = e.target?.result as string;
+      const newBerkas: BerkasDraftTTE = {
+        id: 'draft-file-' + Date.now(),
+        namaFile: file.name,
+        ukuranFile: formatFileSize(file.size),
+        tipeFile: file.type || 'application/pdf',
+        fileUrl: fileUrl,
+        waktuUnggah: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        diunggahOleh: `${SEKSI_CONFIG[targetSeksi].kepala} (${SEKSI_CONFIG[targetSeksi].singkatan})`,
+        seksi: targetSeksi
+      };
+      onSuccess(newBerkas);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUseTemplateFile = (
+    jenisSurat: string,
+    nomorSurat: string,
+    onSuccess: (berkas: BerkasDraftTTE) => void,
+    targetSeksi: SeksiType
+  ) => {
+    const sanitizedNo = nomorSurat.replace(/[\/\.]/g, '_');
+    const templateBerkas: BerkasDraftTTE = {
+      id: 'draft-template-' + Date.now(),
+      namaFile: `Draft_Naskah_${sanitizedNo || 'Resmi'}.pdf`,
+      ukuranFile: '1.4 MB',
+      tipeFile: 'application/pdf',
+      waktuUnggah: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      diunggahOleh: `${SEKSI_CONFIG[targetSeksi].kepala} (${SEKSI_CONFIG[targetSeksi].singkatan})`,
+      seksi: targetSeksi,
+      catatanPengantar: `Konsep naskah dinas ${jenisSurat} telah disusun sesuai kaidah tata naskah dinas Kemenag.`
+    };
+    onSuccess(templateBerkas);
+  };
+
   const handleOpenReview = (item: Permohonan) => {
     setActiveReviewPermohonan(item);
     setCatatanSeksi(item.catatanSeksi || 'Telah diteliti berkas dan memenuhi ketentuan teknis.');
     setDraftNomorSurat(item.isiDokumenKeluaran?.nomorSurat || `B-${Math.floor(1400 + Math.random() * 500)}/Kk.06.05/${item.seksi.toUpperCase().substring(0, 3)}/10/2026`);
     setDraftJudul(item.isiDokumenKeluaran?.judul || `SURAT REKOMENDASI / KETERANGAN RESMI`);
     setDraftPeruntukan(item.pemohon.instansiOrLembaga || item.pemohon.namaLengkap);
+    setReviewUploadedFile(item.berkasDraftTTE || item.isiDokumenKeluaran?.berkasDraftTTE || null);
   };
 
   const handleForwardToTTE = () => {
     if (!activeReviewPermohonan) return;
+
+    const finalBerkas: BerkasDraftTTE = reviewUploadedFile || {
+      id: 'draft-' + Date.now(),
+      namaFile: `Draft_Naskah_${draftNomorSurat.replace(/[\/\.]/g, '_') || 'Kemenag'}.pdf`,
+      ukuranFile: '1.4 MB',
+      tipeFile: 'application/pdf',
+      waktuUnggah: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      diunggahOleh: `${seksiInfo.kepala} (${seksiInfo.singkatan})`,
+      seksi: selectedSeksiTab,
+      catatanPengantar: catatanSeksi
+    };
 
     seksiReviewPermohonan(
       activeReviewPermohonan.nomorResi,
@@ -110,11 +200,65 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
           'Kepala Bagian Tata Usaha Kantor Kemenag Kab. Musi Rawas',
           'Arsip Seksi Teknis Terkait'
         ],
-        peruntukan: draftPeruntukan
-      }
+        peruntukan: draftPeruntukan,
+        berkasDraftTTE: finalBerkas
+      },
+      finalBerkas
     );
 
     setActiveReviewPermohonan(null);
+    setReviewUploadedFile(null);
+  };
+
+  const handleOpenDirectUploadModal = () => {
+    const currentSeksi = selectedSeksiTab;
+    const cfg = SEKSI_CONFIG[currentSeksi];
+    const noSuratRandom = `B-${Math.floor(1500 + Math.random() * 500)}/Kk.06.05/${currentSeksi.toUpperCase().substring(0, 3)}/10/2026`;
+    setDirectJudul(`SURAT REKOMENDASI / KEPUTUSAN RESMI SEKSI ${cfg.singkatan.toUpperCase()}`);
+    setDirectNomorSurat(noSuratRandom);
+    setDirectPerihal(`Pengajuan Naskah Dinas Seksi ${cfg.nama} untuk Ditandatangani Elektronik (TTE)`);
+    setDirectPeruntukan('');
+    setDirectCatatan('Naskah dinas resmi dan lampiran telah diteliti memenuhi ketentuan tata naskah dinas. Diteruskan ke Operator & Kepala Kantor untuk di-TTE.');
+    setDirectUploadedFile(null);
+    setDirectError('');
+    setIsDirectUploadModalOpen(true);
+  };
+
+  const handleDirectUploadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directJudul.trim()) {
+      setDirectError('Judul naskah dokumen dinas wajib diisi.');
+      return;
+    }
+    if (!directPeruntukan.trim()) {
+      setDirectError('Penerima / Peruntukan naskah wajib diisi.');
+      return;
+    }
+
+    const finalFile: BerkasDraftTTE = directUploadedFile || {
+      id: 'draft-direct-' + Date.now(),
+      namaFile: `Draft_${directNomorSurat.replace(/[\/\.]/g, '_') || 'Naskah_Dinas'}.pdf`,
+      ukuranFile: '1.5 MB',
+      tipeFile: 'application/pdf',
+      waktuUnggah: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      diunggahOleh: `${seksiInfo.kepala} (${seksiInfo.singkatan})`,
+      seksi: selectedSeksiTab,
+      catatanPengantar: directCatatan
+    };
+
+    unggahBerkasTTELangsung({
+      seksi: selectedSeksiTab,
+      judul: directJudul,
+      nomorSurat: directNomorSurat,
+      perihal: directPerihal,
+      peruntukan: directPeruntukan,
+      berkas: finalFile,
+      catatan: directCatatan
+    });
+
+    setIsDirectUploadModalOpen(false);
+    setDirectUploadedFile(null);
+    setActiveSubTab('progres_layanan');
   };
 
   const handleSyncApp = (appId: string) => {
@@ -126,68 +270,105 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      {/* 1. SEKSI SELECTOR BAR (5 SEKSI UTAMA) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
-        <button
-          onClick={() => { setSelectedSeksiTab('pendis'); setActiveSubTab('progres_layanan'); }}
-          className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-            selectedSeksiTab === 'pendis'
-              ? 'bg-emerald-800 text-white shadow-lg ring-2 ring-emerald-600/30'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-emerald-50'
-          }`}
-        >
-          <GraduationCap className="w-4 h-4 text-emerald-400" />
-          Seksi Pendidikan Islam (Pendis)
-        </button>
+      {/* 1. SEKSI SELECTOR BAR / DEDICATED SECTION HEADER */}
+      {userSeksi ? (
+        <div className="mb-6 bg-white border border-teal-200/80 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-bold shrink-0 shadow-2xs">
+              {userSeksi === 'pendis' && <GraduationCap className="w-6 h-6 text-emerald-600" />}
+              {userSeksi === 'bimas_islam' && <Landmark className="w-6 h-6 text-teal-600" />}
+              {userSeksi === 'bimas_kristen' && <Cross className="w-6 h-6 text-indigo-600" />}
+              {userSeksi === 'bimas_hindu' && <Flame className="w-6 h-6 text-amber-600" />}
+              {userSeksi === 'kepegawaian' && <Building2 className="w-6 h-6 text-purple-600" />}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-300">
+                  Menu Login Sesuai Seksi
+                </span>
+                <span className="text-xs text-slate-500 font-semibold hidden sm:inline">
+                  Hak Akses Terverifikasi: {seksiInfo.singkatan}
+                </span>
+              </div>
+              <h2 className="text-sm sm:text-base font-black text-slate-900 mt-0.5">
+                Dashboard & Layanan {seksiInfo.nama}
+              </h2>
+            </div>
+          </div>
 
-        <button
-          onClick={() => { setSelectedSeksiTab('bimas_islam'); setActiveSubTab('progres_layanan'); }}
-          className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-            selectedSeksiTab === 'bimas_islam'
-              ? 'bg-teal-800 text-white shadow-lg ring-2 ring-teal-600/30'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-teal-50'
-          }`}
-        >
-          <Landmark className="w-4 h-4 text-teal-400" />
-          Seksi Bimas Islam
-        </button>
-
-        <button
-          onClick={() => { setSelectedSeksiTab('bimas_kristen'); setActiveSubTab('progres_layanan'); }}
-          className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-            selectedSeksiTab === 'bimas_kristen'
-              ? 'bg-indigo-800 text-white shadow-lg ring-2 ring-indigo-600/30'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50'
-          }`}
-        >
-          <Cross className="w-4 h-4 text-indigo-400" />
-          Penyelenggara Bimas Kristen
-        </button>
-
-        <button
-          onClick={() => { setSelectedSeksiTab('bimas_hindu'); setActiveSubTab('progres_layanan'); }}
-          className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-            selectedSeksiTab === 'bimas_hindu'
-              ? 'bg-amber-700 text-white shadow-lg ring-2 ring-amber-600/30'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-amber-50'
-          }`}
-        >
-          <Flame className="w-4 h-4 text-amber-400" />
-          Penyelenggara Bimas Hindu
-        </button>
-
-        <button
-          onClick={() => { setSelectedSeksiTab('kepegawaian'); setActiveSubTab('progres_layanan'); }}
-          className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-            selectedSeksiTab === 'kepegawaian'
-              ? 'bg-purple-800 text-white shadow-lg ring-2 ring-purple-600/30'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-purple-50'
-          }`}
-        >
-          <Building2 className="w-4 h-4 text-purple-400" />
-          Subbag Tata Usaha (Kepegawaian)
-        </button>
-      </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Pejabat Penanggung Jawab: <strong className="text-slate-900">{seksiInfo.kepala}</strong></span>
+          </div>
+        </div>
+      ) : (
+        /* Super Admin Selector: Bebas memilih 5 seksi */
+        <div className="mb-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-purple-600" />
+              Mode Supervisi Super Admin: Pilih Seksi untuk Dipantau
+            </span>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            <button
+              onClick={() => { setSelectedSeksiTab('pendis'); setActiveSubTab('progres_layanan'); }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                selectedSeksiTab === 'pendis'
+                  ? 'bg-emerald-800 text-white shadow-md ring-2 ring-emerald-600/30'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-emerald-50'
+              }`}
+            >
+              <GraduationCap className="w-4 h-4 text-emerald-400" />
+              Seksi Pendis
+            </button>
+            <button
+              onClick={() => { setSelectedSeksiTab('bimas_islam'); setActiveSubTab('progres_layanan'); }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                selectedSeksiTab === 'bimas_islam'
+                  ? 'bg-teal-800 text-white shadow-md ring-2 ring-teal-600/30'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-teal-50'
+              }`}
+            >
+              <Landmark className="w-4 h-4 text-teal-400" />
+              Seksi Bimas Islam
+            </button>
+            <button
+              onClick={() => { setSelectedSeksiTab('bimas_kristen'); setActiveSubTab('progres_layanan'); }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                selectedSeksiTab === 'bimas_kristen'
+                  ? 'bg-indigo-800 text-white shadow-md ring-2 ring-indigo-600/30'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50'
+              }`}
+            >
+              <Cross className="w-4 h-4 text-indigo-400" />
+              Bimas Kristen
+            </button>
+            <button
+              onClick={() => { setSelectedSeksiTab('bimas_hindu'); setActiveSubTab('progres_layanan'); }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                selectedSeksiTab === 'bimas_hindu'
+                  ? 'bg-amber-700 text-white shadow-md ring-2 ring-amber-600/30'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-amber-50'
+              }`}
+            >
+              <Flame className="w-4 h-4 text-amber-400" />
+              Bimas Hindu
+            </button>
+            <button
+              onClick={() => { setSelectedSeksiTab('kepegawaian'); setActiveSubTab('progres_layanan'); }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                selectedSeksiTab === 'kepegawaian'
+                  ? 'bg-purple-800 text-white shadow-md ring-2 ring-purple-600/30'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-purple-50'
+              }`}
+            >
+              <Building2 className="w-4 h-4 text-purple-400" />
+              Subbag Kepegawaian TU
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 2. SECTION BANNER & METRICS */}
       <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 mb-6 shadow-xl border border-emerald-800/30">
@@ -272,18 +453,26 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
       {/* ------------------------------------------------------------- */}
       {activeSubTab === 'progres_layanan' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
             <div>
-              <h3 className="font-bold text-base text-slate-900">
-                Tab Progres Layanan {seksiInfo.nama}
+              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                <span>Tab Progres Layanan & Naskah TTE {seksiInfo.nama}</span>
+                <span className="text-xs font-mono font-bold bg-teal-50 text-teal-800 border border-teal-200 px-2.5 py-0.5 rounded-full">
+                  {seksiPermohonan.length} Berkas
+                </span>
               </h3>
-              <p className="text-xs text-slate-600 font-medium">
-                Memantau disposisi berkas dan menyusun draft naskah dinas untuk diajukan ke Kepala Kantor.
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                Memantau disposisi berkas dan upload file naskah dinas untuk dikirim ke Operator & Kepala Kantor guna penandatanganan elektronik (TTE BSrE).
               </p>
             </div>
-            <span className="text-xs font-mono font-bold bg-teal-50 text-teal-800 border border-teal-200 px-3 py-1 rounded-xl">
-              {seksiPermohonan.length} Berkas Masuk Seksi
-            </span>
+            
+            <button
+              onClick={handleOpenDirectUploadModal}
+              className="px-4 py-2.5 bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-800 hover:to-emerald-800 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+            >
+              <UploadCloud className="w-4 h-4 text-emerald-200" />
+              <span>Upload Berkas Naskah TTE ke Kakan</span>
+            </button>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
@@ -294,7 +483,7 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
                   <th className="py-3.5 px-4">Nama Layanan & Perihal</th>
                   <th className="py-3.5 px-4">Pemohon</th>
                   <th className="py-3.5 px-4">Status Progres</th>
-                  <th className="py-3.5 px-4 text-right">Aksi Telaah Seksi</th>
+                  <th className="py-3.5 px-4 text-right">Aksi Telaah & Berkas</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -316,6 +505,13 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
                         <td className="py-3.5 px-4 max-w-sm">
                           <div className="font-bold text-slate-900">{item.namaLayanan}</div>
                           <div className="text-slate-600 text-[11px] line-clamp-1">{item.perihal}</div>
+                          {item.berkasDraftTTE && (
+                            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/80 w-fit">
+                              <Paperclip className="w-3 h-3 text-teal-600 shrink-0" />
+                              <span className="font-semibold truncate max-w-[200px]">{item.berkasDraftTTE.namaFile}</span>
+                              <span className="text-[10px] text-slate-500 font-mono">({item.berkasDraftTTE.ukuranFile})</span>
+                            </div>
+                          )}
                         </td>
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-slate-900">{item.pemohon.namaLengkap}</div>
@@ -347,16 +543,28 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
                             {isReadyForSeksi && (
                               <button
                                 onClick={() => handleOpenReview(item)}
-                                className="px-3.5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-lg transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+                                className="px-3.5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                               >
-                                <FileCheck className="w-3.5 h-3.5" /> Telaah & Draft TTE
+                                <UploadCloud className="w-3.5 h-3.5" /> Upload & Draft TTE
                               </button>
                             )}
 
                             {item.status === 'siap_tte' && (
-                              <span className="text-[11px] font-semibold text-purple-700 italic">
-                                Menunggu TTE Kakan
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-md border border-purple-200">
+                                  Terkirim ke Kakan
+                                </span>
+                                {item.berkasDraftTTE?.fileUrl && (
+                                  <a
+                                    href={item.berkasDraftTTE.fileUrl}
+                                    download={item.berkasDraftTTE.namaFile}
+                                    className="p-1 rounded-md text-slate-500 hover:text-teal-700 hover:bg-teal-50"
+                                    title="Unduh Draft"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                              </div>
                             )}
                           </div>
                         </td>
@@ -885,29 +1093,344 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
                   Hasil Telaah Teknis Seksi:
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={catatanSeksi}
                   onChange={(e) => setCatatanSeksi(e.target.value)}
                   placeholder="Berdasarkan verifikasi faktual lapangan..."
                   className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 outline-hidden"
                 />
               </div>
+
+              {/* UPLOAD BERKAS DRAFT NASKAH TTE */}
+              <div className="pt-3 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <FileUp className="w-4 h-4 text-teal-700" />
+                    <span>Upload Berkas Draft Dokumen TTE (PDF / DOCX):</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => handleUseTemplateFile(draftJudul, draftNomorSurat, setReviewUploadedFile, selectedSeksiTab)}
+                    className="text-[11px] font-bold text-teal-700 hover:text-teal-900 underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-500" /> Gunakan Draft Standar (.pdf)
+                  </button>
+                </div>
+
+                {reviewUploadedFile ? (
+                  <div className="p-3 bg-teal-50/80 rounded-xl border border-teal-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-9 h-9 rounded-lg bg-teal-100 border border-teal-300 flex items-center justify-center text-teal-800 shrink-0">
+                        <FileText className="w-5 h-5 text-teal-700" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">
+                          {reviewUploadedFile.namaFile}
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-medium">
+                          {reviewUploadedFile.ukuranFile} • Diunggah {reviewUploadedFile.waktuUnggah} oleh {reviewUploadedFile.diunggahOleh}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {reviewUploadedFile.fileUrl && (
+                        <a
+                          href={reviewUploadedFile.fileUrl}
+                          download={reviewUploadedFile.namaFile}
+                          className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-teal-800 hover:border-teal-300 transition-colors"
+                          title="Unduh Draft File"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setReviewUploadedFile(null)}
+                        className="p-1.5 rounded-lg bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-colors cursor-pointer"
+                        title="Hapus / Ganti Berkas"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative border-2 border-dashed border-teal-300/80 hover:border-teal-500 rounded-xl p-4 bg-teal-50/30 text-center transition-all">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleProcessUploadedFile(file, setReviewUploadedFile, selectedSeksiTab);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <UploadCloud className="w-7 h-7 text-teal-600 mx-auto mb-1.5" />
+                    <p className="text-xs font-bold text-slate-800">
+                      Klik atau seret berkas naskah draft ke sini
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Mendukung format PDF, Word DOC, DOCX (Maksimal 15 MB)
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
               <button
-                onClick={() => setActiveReviewPermohonan(null)}
+                onClick={() => {
+                  setActiveReviewPermohonan(null);
+                  setReviewUploadedFile(null);
+                }}
                 className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleForwardToTTE}
-                className="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
               >
-                <Send className="w-4 h-4" /> Kirim ke Kepala Kantor untuk TTE
+                <Send className="w-4 h-4" /> Kirim Berkas ke Kepala Kantor untuk TTE
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL UPLOAD BERKAS NASKAH TTE LANGSUNG KE OPERATOR & KEPALA KANTOR */}
+      {isDirectUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-teal-900 via-emerald-900 to-slate-900 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
+                  <UploadCloud className="w-5 h-5 text-emerald-300" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/30">
+                      Seksi {seksiInfo.singkatan}
+                    </span>
+                    <span className="text-xs text-emerald-200 font-semibold">TTE BSrE BSSN</span>
+                  </div>
+                  <h3 className="font-bold text-base text-white mt-0.5">
+                    Upload Berkas Naskah Dinas Siap TTE ke Kepala Kantor
+                  </h3>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsDirectUploadModalOpen(false)}
+                className="p-1.5 rounded-lg text-white/80 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleDirectUploadSubmit} className="p-6 overflow-y-auto space-y-4 text-xs">
+              {directError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{directError}</span>
+                </div>
+              )}
+
+              {/* Seksi & Pejabat Info Banner */}
+              <div className="p-3 bg-teal-50 rounded-xl border border-teal-200 text-teal-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Seksi Pengunggah Naskah:</span>
+                  <strong className="text-teal-900">{seksiInfo.nama}</strong>
+                </div>
+                <div className="text-left sm:text-right">
+                  <span className="text-slate-500 block text-[11px]">Pejabat Penanggung Jawab:</span>
+                  <strong className="text-slate-900">{seksiInfo.kepala}</strong>
+                </div>
+              </div>
+
+              {/* Form Input fields */}
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Judul Naskah Dokumen Dinas: <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={directJudul}
+                  onChange={(e) => {
+                    setDirectJudul(e.target.value);
+                    setDirectError('');
+                  }}
+                  placeholder="Contoh: SURAT REKOMENDASI IZIN OPERASIONAL MADRASAH"
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 font-bold"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1">
+                    Nomor Naskah Dinas:
+                  </label>
+                  <input
+                    type="text"
+                    value={directNomorSurat}
+                    onChange={(e) => setDirectNomorSurat(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-teal-600 font-mono"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1">
+                    Penerima / Peruntukan Dokumen: <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={directPeruntukan}
+                    onChange={(e) => {
+                      setDirectPeruntukan(e.target.value);
+                      setDirectError('');
+                    }}
+                    placeholder="Contoh: Yayasan Al-Falah / Drs. H. Ahmad"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-teal-600 font-semibold"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Perihal Dokumen:
+                </label>
+                <input
+                  type="text"
+                  value={directPerihal}
+                  onChange={(e) => setDirectPerihal(e.target.value)}
+                  placeholder="Ringkasan perihal naskah dinas..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-teal-600"
+                />
+              </div>
+
+              {/* UPLOAD FILE ZONE */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Paperclip className="w-4 h-4 text-teal-700" />
+                    <span>Lampirkan Berkas File Naskah Dinas (PDF / DOCX): <span className="text-rose-500">*</span></span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => handleUseTemplateFile(directJudul, directNomorSurat, setDirectUploadedFile, selectedSeksiTab)}
+                    className="text-[11px] font-bold text-teal-700 hover:text-teal-900 underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-500" /> Pakai Naskah Contoh (.pdf)
+                  </button>
+                </div>
+
+                {directUploadedFile ? (
+                  <div className="p-3 bg-teal-50 rounded-xl border border-teal-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-9 h-9 rounded-lg bg-teal-100 border border-teal-300 flex items-center justify-center text-teal-800 shrink-0">
+                        <FileText className="w-5 h-5 text-teal-700" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">
+                          {directUploadedFile.namaFile}
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-medium">
+                          {directUploadedFile.ukuranFile} • Diunggah {directUploadedFile.waktuUnggah} oleh {directUploadedFile.diunggahOleh}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {directUploadedFile.fileUrl && (
+                        <a
+                          href={directUploadedFile.fileUrl}
+                          download={directUploadedFile.namaFile}
+                          className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-teal-800 hover:border-teal-300 transition-colors"
+                          title="Unduh Draft File"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setDirectUploadedFile(null)}
+                        className="p-1.5 rounded-lg bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-colors cursor-pointer"
+                        title="Hapus / Ganti Berkas"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative border-2 border-dashed border-teal-300/80 hover:border-teal-500 rounded-xl p-5 bg-teal-50/30 text-center transition-all cursor-pointer">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleProcessUploadedFile(file, setDirectUploadedFile, selectedSeksiTab);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <UploadCloud className="w-8 h-8 text-teal-600 mx-auto mb-1.5" />
+                    <p className="text-xs font-bold text-slate-800">
+                      Pilih atau Seret Berkas Naskah Dinas ke Area Ini
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Format didukung: PDF, DOCX, DOC (Ukuran maksimal 15 MB)
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Catatan Pengantar */}
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Catatan Pengantar untuk Operator & Kepala Kantor:
+                </label>
+                <textarea
+                  rows={2}
+                  value={directCatatan}
+                  onChange={(e) => setDirectCatatan(e.target.value)}
+                  placeholder="Catatan telaah atau instruksi khusus untuk penandatanganan..."
+                  className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:border-teal-600"
+                />
+              </div>
+
+              {/* Legal Notice */}
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-950 text-[11px] leading-relaxed flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <span>
+                  Dokumen yang dikirim akan otomatis masuk ke antrean verifikasi Operator PTSP dan menunggu otorisasi TTE resmi Kepala Kantor menggunakan sertifikat digital BSrE BSSN.
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsDirectUploadModalOpen(false)}
+                  className="px-4 py-2 font-bold text-slate-600 hover:text-slate-800 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-teal-800 hover:bg-teal-900 text-white font-bold rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-all"
+                >
+                  <Send className="w-4 h-4 text-emerald-300" />
+                  Kirim ke Operator & Kepala Kantor (Siap TTE)
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -34,6 +34,7 @@ export interface DokumenPersyaratan {
   catatan?: string;
   namaFile?: string;
   ukuranFile?: string;
+  fileUrl?: string;
 }
 
 export interface LayananKatalog {
@@ -77,6 +78,18 @@ export interface TTEInfo {
   passphraseVerified?: boolean;
 }
 
+export interface BerkasDraftTTE {
+  id: string;
+  namaFile: string;
+  ukuranFile: string;
+  tipeFile: string; // e.g. 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  fileUrl?: string; // base64 / blob / data url
+  waktuUnggah: string;
+  diunggahOleh: string; // e.g. "Seksi Pendidikan Islam (Kasi Pendis)"
+  seksi: SeksiType;
+  catatanPengantar?: string;
+}
+
 export interface Permohonan {
   id: string;
   nomorResi: string; // e.g. PTSP-MURA-2026-0042
@@ -102,6 +115,9 @@ export interface Permohonan {
   catatanPemohon?: string;
   dokumenList: DokumenPersyaratan[];
   
+  // Berkas Draft Dokumen TTE yang diunggah oleh Seksi untuk Kepala Kantor
+  berkasDraftTTE?: BerkasDraftTTE;
+  
   // Workflow Status
   status: StatusPermohonan;
   history: HistoryStatus[];
@@ -119,6 +135,7 @@ export interface Permohonan {
     diktumKeputusan: string[];
     tembusan: string[];
     peruntukan: string;
+    berkasDraftTTE?: BerkasDraftTTE;
   };
 }
 

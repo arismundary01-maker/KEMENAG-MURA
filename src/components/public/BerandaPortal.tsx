@@ -74,6 +74,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
   const isSuperAdmin = currentRole === 'super_admin';
 
   const [activeKatalogTab, setActiveKatalogTab] = useState<'semua' | SeksiType>('semua');
+  const [katalogSearch, setKatalogSearch] = useState('');
   const [trackingInput, setTrackingInput] = useState('');
   const [selectedBerita, setSelectedBerita] = useState<BeritaItem | null>(null);
   const [selectedDetailLayanan, setSelectedDetailLayanan] = useState<LayananKatalog | null>(null);
@@ -197,9 +198,33 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
     setActiveView('tracking_view');
   };
 
+  // Saat pengguna memilih seksi/unit layanan, langsung tampilkan seluruh layanan seksi tersebut
+  const handleSelectSeksiTab = (seksi: SeksiType | 'semua') => {
+    setActiveKatalogTab(seksi);
+    setKatalogSearch(''); // Reset kata kunci pencarian agar seluruh layanan seksi terpilih langsung tampil
+    setTimeout(() => {
+      const el = document.getElementById('daftar-layanan-ptsp');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+  };
+
   const filteredLayanan = activeKatalogTab === 'semua'
     ? katalogLayanan
     : katalogLayanan.filter(l => l.seksi === activeKatalogTab);
+
+  const searchedLayanan = filteredLayanan.filter(l => {
+    if (!katalogSearch.trim()) return true;
+    const q = katalogSearch.trim().toLowerCase();
+    return (
+      l.namaLayanan.toLowerCase().includes(q) ||
+      l.kode.toLowerCase().includes(q) ||
+      l.deskripsi.toLowerCase().includes(q) ||
+      l.outputDokumen.toLowerCase().includes(q) ||
+      l.dokumenSyarat.some(s => s.toLowerCase().includes(q))
+    );
+  });
 
   const totalSelesaiTTE = permohonanList.filter(p => p.status === 'selesai_tte').length;
 
@@ -582,21 +607,12 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                   </span>
                 </div>
                 <p className="text-xs text-purple-200/90 mt-0.5">
-                  Anda dapat langsung menambah, mengubah, atau menghapus Menu Aplikasi Web, Katalog Layanan, Berita, dan Riwayat Kepala Kantor di Beranda ini.
+                  Anda dapat langsung menambah, mengubah, atau menghapus Katalog Layanan, Berita, dan Riwayat Kepala Kantor di Beranda ini.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => handleOpenAddMenuAplikasi()}
-                className="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ring-1 ring-teal-400/40"
-                title="Super Admin: Tambah Data Menu Aplikasi / Web Utama"
-              >
-                <Plus className="w-4 h-4 text-teal-200" />
-                + Menu Aplikasi
-              </button>
-
               <button
                 onClick={() => handleOpenAddLayanan()}
                 className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
@@ -691,277 +707,8 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       </section>
 
-      {/* 3. MENU APLIKASI & PORTAL WEB UTAMA TERINTEGRASI KEMENAG MURA (TAMPILAN KARTU) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-16" id="menu-aplikasi-portal">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-800 uppercase tracking-wider mb-1 bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
-              <Globe className="w-4 h-4 text-teal-600" />
-              Portal Web & Ekosistem Digital
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-              Menu Aplikasi & Web Utama Kemenag Kab. Murung Raya
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600 max-w-3xl mt-1 leading-relaxed">
-              Pusat akses cepat ke Web Utama Kementerian Agama Kabupaten Murung Raya, sistem informasi sektoral (SIPENDIS Mura, SIMAS, SIMKAH, SIWAK, SIAGAMA, SIMBA, SIMPEG 5), dan superapps nasional dalam tampilan kartu terpadu.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Quick Count Badge */}
-            <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 px-3.5 py-2 rounded-xl">
-              <Layers className="w-4 h-4 text-teal-700 shrink-0" />
-              <div className="text-xs">
-                <p className="font-bold text-teal-950">{daftarMenuAplikasi.filter(a => a.statusAktif).length} Aplikasi Aktif</p>
-                <p className="text-[11px] text-teal-700">Terkoneksi Lintas Sektor</p>
-              </div>
-            </div>
-
-            {/* Direct Super Admin Add Menu Aplikasi Button */}
-            {isSuperAdmin && (
-              <button
-                onClick={() => handleOpenAddMenuAplikasi()}
-                className="px-4 py-2.5 bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-800 hover:to-emerald-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer shrink-0 transition-all ring-2 ring-teal-300"
-                title="Super Admin: Tambah Data Menu Aplikasi Baru dalam Tampilan Kartu"
-              >
-                <Plus className="w-4 h-4 text-teal-200" />
-                Tambah Menu Aplikasi
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Filter Tabs & Quick Search */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs mb-8 flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 scrollbar-none">
-            {[
-              { id: 'semua', label: 'Semua Aplikasi', count: daftarMenuAplikasi.length },
-              { id: 'portal_utama', label: 'Web Utama & Daerah', count: daftarMenuAplikasi.filter(a => a.kategori === 'portal_utama').length },
-              { id: 'pendis', label: 'Pendidikan Islam', count: daftarMenuAplikasi.filter(a => a.kategori === 'pendis').length },
-              { id: 'bimas_islam', label: 'Bimas Islam', count: daftarMenuAplikasi.filter(a => a.kategori === 'bimas_islam').length },
-              { id: 'bimas_kristen', label: 'Bimas Kristen', count: daftarMenuAplikasi.filter(a => a.kategori === 'bimas_kristen').length },
-              { id: 'bimas_hindu', label: 'Bimas Hindu', count: daftarMenuAplikasi.filter(a => a.kategori === 'bimas_hindu').length },
-              { id: 'kepegawaian', label: 'Kepegawaian / TU', count: daftarMenuAplikasi.filter(a => a.kategori === 'kepegawaian').length },
-              { id: 'layanan_nasional', label: 'Nasional', count: daftarMenuAplikasi.filter(a => a.kategori === 'layanan_nasional').length },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setKategoriAplikasiFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                  kategoriAplikasiFilter === tab.id
-                    ? 'bg-teal-700 text-white shadow-sm'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  kategoriAplikasiFilter === tab.id ? 'bg-teal-900/60 text-teal-100' : 'bg-slate-200 text-slate-600'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full lg:w-72 shrink-0">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Cari aplikasi atau portal web..."
-              value={searchAplikasi}
-              onChange={(e) => setSearchAplikasi(e.target.value)}
-              className="w-full text-xs pl-9 pr-8 py-2 rounded-xl border border-slate-200 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-hidden transition-all"
-            />
-            {searchAplikasi && (
-              <button
-                onClick={() => setSearchAplikasi('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Application Cards Grid */}
-        {(() => {
-          const filteredApps = daftarMenuAplikasi.filter((app) => {
-            const matchKategori = kategoriAplikasiFilter === 'semua' || app.kategori === kategoriAplikasiFilter;
-            const matchSearch = !searchAplikasi.trim() || 
-              app.namaAplikasi.toLowerCase().includes(searchAplikasi.toLowerCase()) ||
-              (app.singkatan && app.singkatan.toLowerCase().includes(searchAplikasi.toLowerCase())) ||
-              app.deskripsi.toLowerCase().includes(searchAplikasi.toLowerCase()) ||
-              app.url.toLowerCase().includes(searchAplikasi.toLowerCase());
-            return matchKategori && matchSearch;
-          });
-
-          if (filteredApps.length === 0) {
-            return (
-              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
-                <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
-                  <Globe className="w-7 h-7" />
-                </div>
-                <h4 className="font-bold text-sm text-slate-800 mb-1">Tidak ada menu aplikasi ditemukan</h4>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
-                  Coba ubah kata kunci pencarian atau pilih kategori lain untuk melihat daftar tautan aplikasi.
-                </p>
-                <button
-                  onClick={() => { setKategoriAplikasiFilter('semua'); setSearchAplikasi(''); }}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
-                >
-                  Reset Filter & Pencarian
-                </button>
-              </div>
-            );
-          }
-
-          return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredApps.map((app) => {
-                const isMainPortal = app.kategori === 'portal_utama' || app.id === 'app-web-utama';
-                const cleanDomain = app.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-
-                const getBadgeColor = (kategori: string) => {
-                  switch (kategori) {
-                    case 'portal_utama': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-                    case 'pendis': return 'bg-teal-100 text-teal-800 border-teal-200';
-                    case 'bimas_islam': return 'bg-cyan-100 text-cyan-800 border-cyan-200';
-                    case 'bimas_kristen': return 'bg-blue-100 text-blue-800 border-blue-200';
-                    case 'bimas_hindu': return 'bg-amber-100 text-amber-800 border-amber-200';
-                    case 'kepegawaian': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-                    case 'layanan_nasional': return 'bg-purple-100 text-purple-800 border-purple-200';
-                    default: return 'bg-slate-100 text-slate-800 border-slate-200';
-                  }
-                };
-
-                const getCategoryName = (kategori: string) => {
-                  switch (kategori) {
-                    case 'portal_utama': return 'Portal Web Utama';
-                    case 'pendis': return 'Pendidikan Islam';
-                    case 'bimas_islam': return 'Bimas Islam';
-                    case 'bimas_kristen': return 'Bimas Kristen';
-                    case 'bimas_hindu': return 'Bimas Hindu';
-                    case 'kepegawaian': return 'Kepegawaian ASN';
-                    case 'layanan_nasional': return 'Superapps Kemenag RI';
-                    default: return kategori;
-                  }
-                };
-
-                return (
-                  <div
-                    key={app.id}
-                    className={`rounded-2xl p-5 transition-all flex flex-col justify-between relative group hover:-translate-y-0.5 ${
-                      isMainPortal
-                        ? 'bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/60 border-2 border-emerald-500/80 shadow-md ring-4 ring-emerald-500/10'
-                        : 'bg-white hover:bg-slate-50/80 border border-slate-200 hover:border-teal-400 shadow-xs hover:shadow-md'
-                    }`}
-                  >
-                    {/* Top Ribbon for Web Utama */}
-                    {isMainPortal && (
-                      <div className="absolute -top-3 left-5 bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-[10px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md flex items-center gap-1 border border-emerald-400/40">
-                        <Sparkles className="w-3 h-3 text-amber-300" />
-                        Web Utama Resmi Kemenag
-                      </div>
-                    )}
-
-                    {/* Super Admin Direct Edit & Delete Buttons on Card */}
-                    {isSuperAdmin && (
-                      <div className="absolute top-3 right-3 flex items-center gap-1 z-10 bg-slate-900/85 backdrop-blur-xs p-1 rounded-lg border border-white/20 shadow-sm">
-                        <button
-                          onClick={(e) => handleOpenEditMenuAplikasi(app, e)}
-                          className="p-1 rounded-md text-teal-300 hover:bg-white/20 transition-colors"
-                          title="Super Admin: Edit Menu Aplikasi"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => handleConfirmDelete('menu_aplikasi', app.id, app.namaAplikasi, e)}
-                          className="p-1 rounded-md text-rose-400 hover:bg-white/20 transition-colors"
-                          title="Super Admin: Hapus Menu Aplikasi"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-
-                    <div>
-                      {/* Card Header */}
-                      <div className="flex items-start gap-3.5 mb-3.5 pt-1">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
-                          isMainPortal 
-                            ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white ring-2 ring-emerald-300/40' 
-                            : 'bg-slate-900 text-emerald-400'
-                        }`}>
-                          {renderAppIcon(app.ikon)}
-                        </div>
-
-                        <div className="flex-1 pr-14">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getBadgeColor(app.kategori)}`}>
-                              {getCategoryName(app.kategori)}
-                            </span>
-                            {app.singkatan && (
-                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono">
-                                {app.singkatan}
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="font-black text-sm sm:text-base text-slate-900 mt-1 leading-snug group-hover:text-teal-700 transition-colors line-clamp-2">
-                            {app.namaAplikasi}
-                          </h3>
-                        </div>
-                      </div>
-
-                      {/* Badge Text pill */}
-                      {app.badgeText && (
-                        <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md mb-2">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>{app.badgeText}</span>
-                        </div>
-                      )}
-
-                      {/* Description */}
-                      <p className="text-xs text-slate-600 leading-relaxed mb-3 line-clamp-3">
-                        {app.deskripsi}
-                      </p>
-
-                      {/* Domain URL indicator */}
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono bg-slate-50 border border-slate-200/80 px-2.5 py-1.5 rounded-xl mb-4">
-                        <LinkIcon className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="truncate">{cleanDomain}</span>
-                      </div>
-                    </div>
-
-                    {/* Card Action Link Button */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="font-medium">Online & Aktif</span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleOpenPortalWeb(app)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ${
-                          isMainPortal
-                            ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-emerald-700/20'
-                            : 'bg-teal-700 hover:bg-teal-800 text-white'
-                        }`}
-                      >
-                        <span>Buka Laman Web</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })()}
-      </section>
-
-      {/* 4. KATALOG PTSP KEMENAG MURA (PERSYARATAN 1 & LANGSUNG EDIT SUPER ADMIN) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-16">
+      {/* 3. KATALOG PTSP KEMENAG MURA (PERSYARATAN 1 & LANGSUNG EDIT SUPER ADMIN) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-16" id="katalog-layanan">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">
@@ -1000,78 +747,307 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
           </div>
         </div>
 
-        {/* Section Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 scrollbar-none">
-          <button
-            onClick={() => setActiveKatalogTab('semua')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeKatalogTab === 'semua'
-                ? 'bg-emerald-800 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            Semua Layanan ({katalogLayanan.length})
-          </button>
+        {/* Menu Layanan Seksi Tampilan Kartu (Requirement 2) */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-emerald-600" />
+              <span>Pilih Seksi / Unit Layanan:</span>
+            </p>
+            <span className="text-xs text-slate-500 font-medium">
+              Klik kartu seksi untuk memfilter daftar layanan
+            </span>
+          </div>
 
-          <button
-            onClick={() => setActiveKatalogTab('kepegawaian')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-              activeKatalogTab === 'kepegawaian'
-                ? 'bg-purple-800 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-purple-900 hover:bg-purple-50'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5 text-purple-600" />
-            Subbag Tata Usaha (Kepegawaian)
-          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            {/* Card 1: Semua Layanan */}
+            <button
+              type="button"
+              onClick={() => handleSelectSeksiTab('semua')}
+              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
+                activeKatalogTab === 'semua'
+                  ? 'border-emerald-600 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-600/20'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-2.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    activeKatalogTab === 'semua' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800'
+                  }`}>
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  {activeKatalogTab === 'semua' ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Aktif
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                      SEMUA
+                    </span>
+                  )}
+                </div>
 
-          <button
-            onClick={() => setActiveKatalogTab('pendis')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-              activeKatalogTab === 'pendis'
-                ? 'bg-emerald-800 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-emerald-900 hover:bg-emerald-50'
-            }`}
-          >
-            <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
-            Pendidikan Islam (Pendis)
-          </button>
+                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
+                  activeKatalogTab === 'semua' ? 'text-emerald-950 font-black' : 'text-slate-900 group-hover:text-emerald-700'
+                }`}>
+                  Semua Layanan
+                </h3>
 
-          <button
-            onClick={() => setActiveKatalogTab('bimas_islam')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-              activeKatalogTab === 'bimas_islam'
-                ? 'bg-teal-800 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-teal-900 hover:bg-teal-50'
-            }`}
-          >
-            <Landmark className="w-3.5 h-3.5 text-teal-600" />
-            Bimas Islam
-          </button>
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                  Katalog lengkap seluruh perizinan dan permohonan PTSP.
+                </p>
+              </div>
 
-          <button
-            onClick={() => setActiveKatalogTab('bimas_hindu')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-              activeKatalogTab === 'bimas_hindu'
-                ? 'bg-amber-700 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-amber-900 hover:bg-amber-50'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5 text-amber-600" />
-            Bimas Hindu
-          </button>
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Total:</span>
+                <span className={`font-bold tabular-nums ${activeKatalogTab === 'semua' ? 'text-emerald-800 font-black' : 'text-slate-700'}`}>
+                  {katalogLayanan.length} Layanan
+                </span>
+              </div>
+            </button>
 
-          <button
-            onClick={() => setActiveKatalogTab('bimas_kristen')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-              activeKatalogTab === 'bimas_kristen'
-                ? 'bg-indigo-800 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-indigo-900 hover:bg-indigo-50'
-            }`}
-          >
-            <Cross className="w-3.5 h-3.5 text-indigo-600" />
-            Bimas Kristen
-          </button>
+            {/* Card 2: Kepegawaian */}
+            <button
+              type="button"
+              onClick={() => handleSelectSeksiTab('kepegawaian')}
+              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
+                activeKatalogTab === 'kepegawaian'
+                  ? 'border-purple-600 bg-purple-50/70 shadow-sm ring-2 ring-purple-600/20'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-2.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    activeKatalogTab === 'kepegawaian' ? 'bg-purple-700 text-white' : 'bg-purple-100 text-purple-800'
+                  }`}>
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  {activeKatalogTab === 'kepegawaian' ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-700 text-white flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Aktif
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">
+                      TU
+                    </span>
+                  )}
+                </div>
+
+                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
+                  activeKatalogTab === 'kepegawaian' ? 'text-purple-950 font-black' : 'text-slate-900 group-hover:text-purple-700'
+                }`}>
+                  Tata Usaha / Kepegawaian
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                  Administrasi ASN, kenaikan pangkat, cuti, berkala & mutasi.
+                </p>
+              </div>
+
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Layanan:</span>
+                <span className={`font-bold tabular-nums ${activeKatalogTab === 'kepegawaian' ? 'text-purple-900 font-black' : 'text-slate-700'}`}>
+                  {katalogLayanan.filter(l => l.seksi === 'kepegawaian').length} Layanan
+                </span>
+              </div>
+            </button>
+
+            {/* Card 3: Pendidikan Islam (Pendis) */}
+            <button
+              type="button"
+              onClick={() => handleSelectSeksiTab('pendis')}
+              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
+                activeKatalogTab === 'pendis'
+                  ? 'border-emerald-600 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-600/20'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-2.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    activeKatalogTab === 'pendis' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'
+                  }`}>
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  {activeKatalogTab === 'pendis' ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-700 text-white flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Aktif
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                      PENDIS
+                    </span>
+                  )}
+                </div>
+
+                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
+                  activeKatalogTab === 'pendis' ? 'text-emerald-950 font-black' : 'text-slate-900 group-hover:text-emerald-700'
+                }`}>
+                  Pendidikan Islam (Pendis)
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                  IJOP Madrasah, Pesantren, MDT, LPQ & Guru PAI.
+                </p>
+              </div>
+
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Layanan:</span>
+                <span className={`font-bold tabular-nums ${activeKatalogTab === 'pendis' ? 'text-emerald-800 font-black' : 'text-slate-700'}`}>
+                  {katalogLayanan.filter(l => l.seksi === 'pendis').length} Layanan
+                </span>
+              </div>
+            </button>
+
+            {/* Card 4: Bimas Islam */}
+            <button
+              type="button"
+              onClick={() => handleSelectSeksiTab('bimas_islam')}
+              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
+                activeKatalogTab === 'bimas_islam'
+                  ? 'border-teal-600 bg-teal-50/70 shadow-sm ring-2 ring-teal-600/20'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-2.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    activeKatalogTab === 'bimas_islam' ? 'bg-teal-700 text-white' : 'bg-teal-100 text-teal-800'
+                  }`}>
+                    <Landmark className="w-5 h-5" />
+                  </div>
+                  {activeKatalogTab === 'bimas_islam' ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-700 text-white flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Aktif
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-teal-800 bg-teal-100 px-1.5 py-0.5 rounded">
+                      BIMAS
+                    </span>
+                  )}
+                </div>
+
+                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
+                  activeKatalogTab === 'bimas_islam' ? 'text-teal-950 font-black' : 'text-slate-900 group-hover:text-teal-700'
+                }`}>
+                  Bimbingan Masyarakat Islam
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                  Kemasjidan, arah kiblat, tanah wakaf & majelis taklim.
+                </p>
+              </div>
+
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Layanan:</span>
+                <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_islam' ? 'text-teal-900 font-black' : 'text-slate-700'}`}>
+                  {katalogLayanan.filter(l => l.seksi === 'bimas_islam').length} Layanan
+                </span>
+              </div>
+            </button>
+
+            {/* Card 5: Bimas Hindu */}
+            <button
+              type="button"
+              onClick={() => handleSelectSeksiTab('bimas_hindu')}
+              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
+                activeKatalogTab === 'bimas_hindu'
+                  ? 'border-amber-600 bg-amber-50/70 shadow-sm ring-2 ring-amber-600/20'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-2.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    activeKatalogTab === 'bimas_hindu' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    <Flame className="w-5 h-5" />
+                  </div>
+                  {activeKatalogTab === 'bimas_hindu' ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-600 text-white flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Aktif
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+                      HINDU
+                    </span>
+                  )}
+                </div>
+
+                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
+                  activeKatalogTab === 'bimas_hindu' ? 'text-amber-950 font-black' : 'text-slate-900 group-hover:text-amber-700'
+                }`}>
+                  Bimbingan Masyarakat Hindu
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                  Tanda daftar pura, pasraman & rohaniwan Hindu.
+                </p>
+              </div>
+
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Layanan:</span>
+                <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_hindu' ? 'text-amber-900 font-black' : 'text-slate-700'}`}>
+                  {katalogLayanan.filter(l => l.seksi === 'bimas_hindu').length} Layanan
+                </span>
+              </div>
+            </button>
+
+            {/* Card 6: Bimas Kristen */}
+            <button
+              type="button"
+              onClick={() => handleSelectSeksiTab('bimas_kristen')}
+              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
+                activeKatalogTab === 'bimas_kristen'
+                  ? 'border-indigo-600 bg-indigo-50/70 shadow-sm ring-2 ring-indigo-600/20'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-2.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    activeKatalogTab === 'bimas_kristen' ? 'bg-indigo-700 text-white' : 'bg-indigo-100 text-indigo-800'
+                  }`}>
+                    <Cross className="w-5 h-5" />
+                  </div>
+                  {activeKatalogTab === 'bimas_kristen' ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-700 text-white flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Aktif
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-1.5 py-0.5 rounded">
+                      KRISTEN
+                    </span>
+                  )}
+                </div>
+
+                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
+                  activeKatalogTab === 'bimas_kristen' ? 'text-indigo-950 font-black' : 'text-slate-900 group-hover:text-indigo-700'
+                }`}>
+                  Bimbingan Masyarakat Kristen
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                  Pendaftaran rumah ibadah, rohaniwan & guru agama.
+                </p>
+              </div>
+
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Layanan:</span>
+                <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_kristen' ? 'text-indigo-900 font-black' : 'text-slate-700'}`}>
+                  {katalogLayanan.filter(l => l.seksi === 'bimas_kristen').length} Layanan
+                </span>
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* SIPENDIS MURA Link Alert for Pendis tab */}
@@ -1102,30 +1078,146 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
           </div>
         )}
 
-        {/* Layanan Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredLayanan.map((lay) => {
-            const seksiInfo = SEKSI_CONFIG[lay.seksi];
-            return (
-              <div 
-                key={lay.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group hover:border-emerald-400 relative"
-              >
+        {/* Container Utama Daftar Seluruh Layanan PTSP */}
+        <div id="daftar-layanan-ptsp" className="scroll-mt-24 mb-4">
+          {activeKatalogTab !== 'semua' ? (
+            <div className="bg-gradient-to-r from-emerald-900 via-teal-950 to-emerald-900 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-emerald-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-white/10 text-amber-300 flex items-center justify-center shrink-0 border border-white/20">
+                  {getSeksiIcon(activeKatalogTab)}
+                </div>
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
-                      {lay.kode}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-emerald-950 px-2 py-0.5 rounded-full">
+                      Seksi Terpilih
                     </span>
+                    <span className="text-xs text-emerald-200 font-medium">
+                      Kepala: {SEKSI_CONFIG[activeKatalogTab].kepala}
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-white mt-1">
+                    Seluruh Layanan {SEKSI_CONFIG[activeKatalogTab].nama}
+                  </h3>
+                  <p className="text-xs text-emerald-100/90 mt-0.5">
+                    Menampilkan seluruh <strong className="text-amber-300 font-bold">{filteredLayanan.length} layanan resmi</strong> yang siap diajukan secara langsung.
+                  </p>
+                </div>
+              </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
-                        {getSeksiIcon(lay.seksi)}
-                        {seksiInfo.singkatan}
+              <button
+                type="button"
+                onClick={() => handleSelectSeksiTab('semua')}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-xs shrink-0"
+              >
+                <span>Tampilkan Semua Seksi</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Katalog Lengkap Seluruh Layanan PTSP ({katalogLayanan.length} Layanan)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Klik kartu seksi di atas untuk langsung menyaring dan menampilkan seluruh layanan per unit.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Search & Filter Bar for List View */}
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="relative flex-1 max-w-lg">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <input
+              type="text"
+              value={katalogSearch}
+              onChange={(e) => setKatalogSearch(e.target.value)}
+              placeholder="Cari dalam daftar layanan (e.g. IJOP, Rekomendasi, Cuti, Nikah)..."
+              className="w-full text-xs sm:text-sm pl-9 pr-8 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-hidden font-medium"
+            />
+            {katalogSearch && (
+              <button
+                onClick={() => setKatalogSearch('')}
+                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                title="Hapus kata kunci"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
+            <span>Menampilkan:</span>
+            <span className="font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg tabular-nums">
+              {searchedLayanan.length} Layanan
+            </span>
+            {activeKatalogTab !== 'semua' && (
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                Seksi: {SEKSI_CONFIG[activeKatalogTab].singkatan}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Katalog Layanan PTSP: Tampilan Daftar (Requirement 1) */}
+        <div className="space-y-3">
+          {searchedLayanan.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center shadow-xs">
+              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-slate-800">
+                Tidak ada layanan yang sesuai dengan kriteria
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                {katalogSearch 
+                  ? `Tidak ditemukan layanan dengan kata kunci "${katalogSearch}". Coba kata kunci lain atau pilih seksi berbeda.`
+                  : 'Belum ada data layanan untuk kategori seksi ini.'}
+              </p>
+              <button
+                onClick={() => {
+                  setKatalogSearch('');
+                  setActiveKatalogTab('semua');
+                }}
+                className="mt-4 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                Reset Filter & Tampilkan Semua Layanan
+              </button>
+            </div>
+          ) : (
+            searchedLayanan.map((lay) => {
+              const seksiInfo = SEKSI_CONFIG[lay.seksi];
+              return (
+                <div 
+                  key={lay.id}
+                  className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 group hover:border-emerald-400 relative"
+                >
+                  {/* Left & Middle: Main Service Detail */}
+                  <div className="flex-1 min-w-0">
+                    {/* Top Row: Code, Seksi, Biaya & Super Admin Tools */}
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                        {lay.kode}
                       </span>
 
-                      {/* Super Admin Direct Edit & Delete Buttons on Card */}
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
+                        {getSeksiIcon(lay.seksi)}
+                        <span>{seksiInfo.nama}</span>
+                      </span>
+
+                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                        Rp 0,- (Gratis)
+                      </span>
+
+                      {/* Super Admin Direct Edit & Delete Buttons on List Row */}
                       {isSuperAdmin && (
-                        <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-200">
+                        <div className="flex items-center gap-1 ml-auto pl-2 border-l border-slate-200">
                           <button
                             onClick={(e) => handleOpenEditLayanan(lay, e)}
                             className="p-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-900 transition-colors cursor-pointer"
@@ -1143,48 +1235,71 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                         </div>
                       )}
                     </div>
-                  </div>
 
-                  <h3 className="font-bold text-sm sm:text-base text-slate-900 mb-2 group-hover:text-emerald-800 transition-colors">
-                    {lay.namaLayanan}
-                  </h3>
+                    {/* Service Name */}
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-emerald-800 transition-colors leading-snug">
+                      {lay.namaLayanan}
+                    </h3>
 
-                  <p className="text-xs text-slate-600 line-clamp-2 mb-3">
-                    {lay.deskripsi}
-                  </p>
+                    {/* Short Description */}
+                    <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed line-clamp-2">
+                      {lay.deskripsi}
+                    </p>
 
-                  {/* Highlights */}
-                  <div className="space-y-1.5 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100 mb-4">
-                    <div className="flex items-center justify-between">
+                    {/* Law & Output Info Strip */}
+                    <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-emerald-600" /> Estimasi Proses:
+                        <span className="font-medium text-slate-700">Keluaran:</span>
+                        <span className="font-semibold text-emerald-800">{lay.outputDokumen}</span>
                       </span>
-                      <span className="font-bold text-slate-800">{lay.estimasiHari} Hari Kerja</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Keluaran Dokumen:</span>
-                      <span className="font-semibold text-emerald-800 truncate max-w-[160px]">{lay.outputDokumen}</span>
+                      <span className="hidden sm:inline text-slate-300">•</span>
+                      <span className="flex items-center gap-1">
+                        <span className="font-medium text-slate-700">Dasar Hukum:</span>
+                        <span className="text-slate-600 font-mono text-[11px] truncate max-w-[280px]">{lay.dasarHukum}</span>
+                      </span>
                     </div>
                   </div>
-                </div>
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => setSelectedDetailLayanan(lay)}
-                    className="text-xs font-semibold text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer"
-                  >
-                    Syarat Berkas ({lay.dokumenSyarat.length})
-                  </button>
-                  <button
-                    onClick={() => onOpenPermohonanModal(lay)}
-                    className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
-                  >
-                    Ajukan <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Middle: Service Specs Strip (Estimasi, Biaya, Syarat count) */}
+                  <div className="shrink-0 flex sm:flex-row lg:flex-col items-start sm:items-center lg:items-start justify-between gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs min-w-[200px]">
+                    <div className="flex items-center gap-1.5 text-slate-700">
+                      <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Estimasi:</span>
+                      <span className="font-bold text-slate-900 tabular-nums">{lay.estimasiHari} Hari Kerja</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Biaya:</span>
+                      <span className="font-bold text-emerald-700">Rp 0,- (Gratis)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-600">
+                      <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span>Syarat:</span>
+                      <span className="font-semibold text-slate-800 tabular-nums">{lay.dokumenSyarat.length} Berkas Syarat</span>
+                    </div>
+                  </div>
+
+                  {/* Right: Action Buttons */}
+                  <div className="shrink-0 flex items-center sm:flex-row lg:flex-col gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 justify-end min-w-[170px]">
+                    <button
+                      onClick={() => setSelectedDetailLayanan(lay)}
+                      className="w-full text-xs font-bold text-slate-700 hover:text-emerald-800 bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 py-2.5 px-3.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Lihat Syarat ({lay.dokumenSyarat.length})</span>
+                    </button>
+                    <button
+                      onClick={() => onOpenPermohonanModal(lay)}
+                      className="w-full text-xs sm:text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 px-4 rounded-xl transition-all shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Ajukan</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </section>
 
@@ -2044,228 +2159,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       )}
 
-      {/* 11. MODAL TAMBAH / EDIT MENU APLIKASI WEB (SUPER ADMIN) */}
-      {menuAplikasiModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 my-8">
-            <div className="bg-linear-to-r from-teal-900 via-teal-800 to-emerald-900 p-5 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-teal-200 border border-white/20">
-                  <Globe className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-base text-white">
-                    {editingMenuAplikasi ? 'Edit Menu Aplikasi & Portal Web' : 'Tambah Menu Aplikasi / Web Utama'}
-                  </h3>
-                  <p className="text-xs text-teal-200">
-                    Kelola tautan portal web utama atau sistem informasi sektoral yang tampil pada kartu di Beranda PTSP.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setMenuAplikasiModalOpen(false)}
-                className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveMenuAplikasi} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nama Aplikasi / Portal Web *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={menuAplikasiForm.namaAplikasi || ''}
-                  onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, namaAplikasi: e.target.value })}
-                  placeholder="Contoh: Portal Web Utama Kemenag Kab. Murung Raya"
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-semibold"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Singkatan / Kode Singkat
-                  </label>
-                  <input
-                    type="text"
-                    value={menuAplikasiForm.singkatan || ''}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, singkatan: e.target.value })}
-                    placeholder="Contoh: WEB UTAMA, SIPENDIS, SIMAS"
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-mono uppercase"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Kategori Sektor / Layanan *
-                  </label>
-                  <select
-                    value={menuAplikasiForm.kategori || 'portal_utama'}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, kategori: e.target.value })}
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-semibold"
-                  >
-                    <option value="portal_utama">Portal Web Utama & Daerah</option>
-                    <option value="pendis">Seksi Pendidikan Islam (Pendis)</option>
-                    <option value="bimas_islam">Seksi Bimas Islam (KUA & Kemasjidan)</option>
-                    <option value="bimas_kristen">Penyelenggara Bimas Kristen</option>
-                    <option value="bimas_hindu">Penyelenggara Bimas Hindu</option>
-                    <option value="kepegawaian">Subbag TU & Kepegawaian</option>
-                    <option value="layanan_nasional">Layanan Nasional / Kemenag RI</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  URL / Tautan Website Lengkap *
-                </label>
-                <div className="relative">
-                  <LinkIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="url"
-                    required
-                    value={menuAplikasiForm.url || ''}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, url: e.target.value })}
-                    placeholder="https://murungraya.kemenag.go.id atau https://sipendismura.my.id"
-                    className="w-full text-xs pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-mono text-teal-800 font-bold"
-                  />
-                </div>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Pastikan diawali dengan https:// atau http:// agar pemohon dapat langsung mengklik dan membuka situs.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Badge / Label Unggulan
-                  </label>
-                  <input
-                    type="text"
-                    value={menuAplikasiForm.badgeText || ''}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, badgeText: e.target.value })}
-                    placeholder="Contoh: Portal Resmi Kemenag"
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Pilihan Ikon Tampilan
-                  </label>
-                  <select
-                    value={menuAplikasiForm.ikon || 'Globe'}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, ikon: e.target.value })}
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-semibold"
-                  >
-                    <option value="Globe">Globe (Web / Portal Umum)</option>
-                    <option value="GraduationCap">GraduationCap (Pendidikan / Madrasah)</option>
-                    <option value="Building2">Building2 (Kemasjidan / Kantor)</option>
-                    <option value="Users">Users (Layanan Nikah / Masyarakat)</option>
-                    <option value="Landmark">Landmark (Wakaf / Lembaga Keagamaan)</option>
-                    <option value="Flame">Flame (Bimas Hindu)</option>
-                    <option value="ShieldCheck">ShieldCheck (Kepegawaian / Keamanan)</option>
-                    <option value="Sparkles">Sparkles (Superapps / Inovasi)</option>
-                    <option value="BookOpen">BookOpen (Buku Pedoman / Regulasi)</option>
-                    <option value="Compass">Compass (Navigasi Portal)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Pilihan Warna Tema Kartu
-                  </label>
-                  <select
-                    value={menuAplikasiForm.warnaTema || 'emerald'}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, warnaTema: e.target.value as any })}
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-semibold"
-                  >
-                    <option value="emerald">Emerald (Hijau Resmi Kemenag)</option>
-                    <option value="teal">Teal (Hijau Toska)</option>
-                    <option value="blue">Blue (Biru Profesional)</option>
-                    <option value="indigo">Indigo (Ungu Tua / ASN)</option>
-                    <option value="amber">Amber (Kuning Emas)</option>
-                    <option value="purple">Purple (Ungu Superapps)</option>
-                    <option value="rose">Rose (Merah Muda)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Urutan Tampilan
-                  </label>
-                  <input
-                    type="number"
-                    value={menuAplikasiForm.urutan ?? 1}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, urutan: parseInt(e.target.value) || 1 })}
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Deskripsi Lengkap Aplikasi & Layanan
-                </label>
-                <textarea
-                  rows={3}
-                  value={menuAplikasiForm.deskripsi || ''}
-                  onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, deskripsi: e.target.value })}
-                  placeholder="Jelaskan secara singkat kegunaan atau target layanan dari portal/aplikasi ini..."
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-teal-600 outline-hidden leading-relaxed"
-                />
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={menuAplikasiForm.statusAktif !== false}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, statusAktif: e.target.checked })}
-                    className="w-4 h-4 text-teal-600 rounded-sm"
-                  />
-                  <span>Tampilkan di Beranda (Status Aktif)</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={menuAplikasiForm.bukaTabBaru !== false}
-                    onChange={(e) => setMenuAplikasiForm({ ...menuAplikasiForm, bukaTabBaru: e.target.checked })}
-                    className="w-4 h-4 text-teal-600 rounded-sm"
-                  />
-                  <span>Buka di Tab Baru (_blank)</span>
-                </label>
-              </div>
-
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMenuAplikasiModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1.5"
-                >
-                  <Check className="w-4 h-4" />
-                  {editingMenuAplikasi ? 'Simpan Perubahan Aplikasi' : 'Tambahkan Menu Aplikasi'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 12. MODAL KONFIRMASI HAPUS (SUPER ADMIN) */}
+      {/* 11. MODAL KONFIRMASI HAPUS (SUPER ADMIN) */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 p-6 text-center">

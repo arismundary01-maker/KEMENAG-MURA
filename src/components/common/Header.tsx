@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePTSP } from '../../context/PTSPContext';
-import { DAFTAR_AKUN_SISTEM } from '../../data/initialData';
+import { DAFTAR_AKUN_SISTEM, SEKSI_CONFIG, getSeksiByRole } from '../../data/initialData';
+import { SeksiType } from '../../types/ptsp';
 import { 
   Bell, 
   Volume2, 
@@ -21,7 +22,12 @@ import {
   LogIn,
   LogOut,
   Users,
-  Globe
+  Globe,
+  GraduationCap,
+  Landmark,
+  Cross,
+  Flame,
+  Building2
 } from 'lucide-react';
 import { AccountSwitcherModal } from './AccountSwitcherModal';
 
@@ -47,6 +53,8 @@ export const Header: React.FC<HeaderProps> = ({
     soundEnabled, 
     toggleSound,
     setSelectedTrackingResi,
+    selectedSeksiTab,
+    setSelectedSeksiTab,
     permohonanList,
     daftarAkun,
     pengaturanWeb,
@@ -58,6 +66,18 @@ export const Header: React.FC<HeaderProps> = ({
   const [currentTime, setCurrentTime] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const roleSeksi = getSeksiByRole(currentRole);
+
+  const getSeksiNavIcon = (seksi: SeksiType) => {
+    switch (seksi) {
+      case 'pendis': return <GraduationCap className="w-3.5 h-3.5" />;
+      case 'bimas_islam': return <Landmark className="w-3.5 h-3.5" />;
+      case 'bimas_kristen': return <Cross className="w-3.5 h-3.5" />;
+      case 'bimas_hindu': return <Flame className="w-3.5 h-3.5" />;
+      case 'kepegawaian': return <Building2 className="w-3.5 h-3.5" />;
+    }
+  };
 
   // Clock in WIB (Sumatera Selatan / Musi Rawas UTC+7)
   useEffect(() => {
@@ -119,24 +139,26 @@ export const Header: React.FC<HeaderProps> = ({
               <span>{currentTime}</span>
             </div>
 
-            {/* Sound Toggle */}
-            <button
-              onClick={toggleSound}
-              title={soundEnabled ? 'Notifikasi Suara Aktif (Klik untuk matikan)' : 'Notifikasi Suara Hening (Klik untuk aktifkan)'}
-              className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[11px] text-white transition-colors"
-            >
-              {soundEnabled ? (
-                <>
-                  <Volume2 className="w-3.5 h-3.5 text-emerald-300" />
-                  <span className="hidden sm:inline">Audio Nyala</span>
-                </>
-              ) : (
-                <>
-                  <VolumeX className="w-3.5 h-3.5 text-slate-300" />
-                  <span className="hidden sm:inline">Audio Hening</span>
-                </>
-              )}
-            </button>
+            {/* Sound Toggle - Hanya ditampilkan untuk petugas internal, disembunyikan untuk pengguna publik */}
+            {!isPublic && (
+              <button
+                onClick={toggleSound}
+                title={soundEnabled ? 'Notifikasi Suara Aktif (Klik untuk matikan)' : 'Notifikasi Suara Hening (Klik untuk aktifkan)'}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[11px] text-white transition-colors cursor-pointer"
+              >
+                {soundEnabled ? (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5 text-emerald-300" />
+                    <span className="hidden sm:inline">Audio Nyala</span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="w-3.5 h-3.5 text-slate-300" />
+                    <span className="hidden sm:inline">Audio Hening</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -147,26 +169,63 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setActiveView('public_portal')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            {/* Kemenag Badge Logo Icon */}
-            <div className="relative w-11 h-11 rounded-xl bg-linear-to-tr from-emerald-800 to-emerald-600 flex items-center justify-center shadow-md border-2 border-emerald-500/30 group-hover:scale-105 transition-transform">
-              <div className="w-8 h-8 rounded-lg bg-emerald-950 flex items-center justify-center text-amber-300 font-black text-xs border border-amber-400/40">
-                <span className="tracking-tighter">KM</span>
+            {/* Animated Public Service Logo (Logo PTSP Bernuansa Pelayanan) */}
+            <div className="relative group/logo flex items-center justify-center shrink-0">
+              {/* Outer Pulsing Glow Aura */}
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-emerald-500/40 via-amber-400/40 to-teal-400/40 blur-xs opacity-75 group-hover:opacity-100 transition-opacity animate-pulse"></div>
+
+              {/* Main Animated Badge Container */}
+              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-950 via-teal-950 to-emerald-900 p-1 shadow-md border-2 border-amber-400/50 flex flex-col items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105">
+                {/* Rotating Service Orbit Ring */}
+                <svg className="absolute inset-0 w-full h-full animate-[spin_10s_linear_infinite] text-amber-300/30 pointer-events-none" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3.5"
+                    strokeDasharray="6 7"
+                  />
+                </svg>
+
+                {/* Shimmer sweep effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none"></div>
+
+                {/* Center Service Emblem: Service Bell / Pelayanan Prima */}
+                <div className="relative z-10 flex flex-col items-center justify-center">
+                  <div className="text-amber-300 drop-shadow-md animate-bounce [animation-duration:2.5s] flex items-center justify-center">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Pelayanan Prima Concierge Bell */}
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" fill="currentColor" fillOpacity="0.25" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      <line x1="12" y1="2" x2="12" y2="4" strokeWidth="3" />
+                      <circle cx="12" cy="2" r="1.5" fill="currentColor" />
+                    </svg>
+                  </div>
+                  <span className="text-[7.5px] font-black tracking-widest text-emerald-200 uppercase -mt-0.5 font-mono">
+                    PTSP
+                  </span>
+                </div>
+
+                {/* Live Service Pulse Indicator */}
+                <span className="absolute top-1 right-1 flex h-2 w-2" title="Pelayanan Aktif Sepenuh Hati">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                </span>
               </div>
-              <span className="absolute -bottom-1 -right-1 px-1 py-0.2 bg-amber-400 text-emerald-950 font-bold text-[9px] rounded-sm shadow-xs">
-                MURA
-              </span>
             </div>
 
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-black text-emerald-950 tracking-tight leading-none group-hover:text-emerald-700 transition-colors">
-                  PTSP ONLINE
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <h1 className="text-base sm:text-lg lg:text-xl font-black text-emerald-950 tracking-tight leading-tight group-hover:text-emerald-700 transition-colors">
+                  PTSP KEMENAG MURA <span className="text-xs sm:text-sm font-bold text-emerald-700 block sm:inline">(Pelayanan Terpadu Satu Pintu)</span>
                 </h1>
-                <span className="hidden sm:inline-block text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded">
+                <span className="hidden md:inline-block text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded shadow-2xs">
                   TTE BSrE
                 </span>
               </div>
-              <p className="text-xs text-slate-600 font-semibold leading-tight">
+              <p className="text-xs text-slate-600 font-semibold leading-tight mt-0.5">
                 {pengaturanWeb.namaKantor}
               </p>
             </div>
@@ -184,7 +243,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
             <button
               type="submit"
-              className="absolute right-1 top-1 bottom-1 px-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold rounded-lg transition-colors"
+              className="absolute right-1 top-1 bottom-1 px-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
             >
               Lacak
             </button>
@@ -192,27 +251,28 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Action Icons: Notification, User Role Switcher */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Real-time Notification Bell */}
-            <div className="relative">
-              <button
-                onClick={() => setIsNotifDropdownOpen(!isNotifDropdownOpen)}
-                className="relative p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors focus:ring-2 focus:ring-emerald-600/20"
-                title="Notifikasi Real-Time"
-              >
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-600 text-white font-bold text-[10px] flex items-center justify-center animate-bounce shadow-xs">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+            {/* Real-time Notification Bell - Hanya untuk Petugas Internal, Disembunyikan untuk Pengguna Publik */}
+            {!isPublic && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotifDropdownOpen(!isNotifDropdownOpen)}
+                  className="relative p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors focus:ring-2 focus:ring-emerald-600/20 cursor-pointer"
+                  title="Notifikasi Real-Time"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-600 text-white font-bold text-[10px] flex items-center justify-center animate-bounce shadow-xs">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
 
-              {/* Notification Dropdown Drawer */}
-              {isNotifDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="bg-emerald-900 text-white p-3.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-emerald-300" />
+                {/* Notification Dropdown Drawer */}
+                {isNotifDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="bg-emerald-900 text-white p-3.5 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-emerald-300" />
                       <span className="font-bold text-sm">Notifikasi Real-time</span>
                       {unreadCount > 0 && (
                         <span className="text-[10px] bg-rose-600 text-white font-bold px-1.5 py-0.2 rounded-full">
@@ -277,6 +337,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               )}
             </div>
+            )}
 
             {/* Public vs Staff Header Controls */}
             {isPublic ? (
@@ -345,38 +406,23 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Navigation Bar (Desktop) */}
         <div className="border-t border-slate-100 bg-slate-50/80 px-4 sm:px-6">
-          <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto py-1 scrollbar-none">
+          <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto py-1.5 scrollbar-none">
             {isPublic ? (
               /* =========================================================================
                  PUBLIC USER NAVIGATION: Hanya menampilkan menu layanan masyarakat.
                  Menu Operator PTSP, Dashboard Admin Seksi, dan Persetujuan TTE DIHILANGKAN.
                  ========================================================================= */
-              <nav className="flex items-center gap-1.5 text-xs font-bold">
+              <nav className="flex items-center gap-2 text-sm sm:text-base font-bold">
                 <button
                   onClick={() => setActiveView('public_portal')}
-                  className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
                     activeView === 'public_portal'
                       ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/50'
+                      : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/60'
                   }`}
                 >
-                  <Layers className="w-3.5 h-3.5" />
-                  Beranda PTSP
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (activeView !== 'public_portal') {
-                      setActiveView('public_portal');
-                    }
-                    setTimeout(() => {
-                      document.getElementById('menu-aplikasi-portal')?.scrollIntoView({ behavior: 'smooth' });
-                    }, 80);
-                  }}
-                  className="px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 text-teal-800 hover:bg-teal-100/70 font-bold whitespace-nowrap cursor-pointer"
-                >
-                  <Globe className="w-3.5 h-3.5 text-teal-600" />
-                  Menu Aplikasi
+                  <Layers className="w-4 h-4" />
+                  <span>Beranda PTSP</span>
                 </button>
 
                 <button
@@ -388,90 +434,114 @@ export const Header: React.FC<HeaderProps> = ({
                       document.getElementById('katalog-layanan')?.scrollIntoView({ behavior: 'smooth' });
                     }, 80);
                   }}
-                  className="px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/50 font-bold whitespace-nowrap cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/60 text-sm sm:text-[15px] font-bold whitespace-nowrap cursor-pointer"
                 >
-                  <FileText className="w-3.5 h-3.5 text-emerald-600" />
-                  Katalog Layanan
+                  <FileText className="w-4 h-4 text-emerald-600" />
+                  <span>Katalog Layanan</span>
                 </button>
 
                 <button
                   onClick={onOpenPermohonanModal}
-                  className="px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-emerald-950 font-black whitespace-nowrap shadow-2xs cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-emerald-950 text-sm sm:text-[15px] font-black whitespace-nowrap shadow-sm cursor-pointer"
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  + Ajukan Permohonan
+                  <FileText className="w-4 h-4" />
+                  <span>+ Ajukan Permohonan</span>
                 </button>
 
                 <button
                   onClick={() => setActiveView('tracking_view')}
-                  className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
                     activeView === 'tracking_view'
                       ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/50'
+                      : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/60'
                   }`}
                 >
-                  <Search className="w-3.5 h-3.5" />
-                  Pelacakan Status Online
+                  <Search className="w-4 h-4" />
+                  <span>Pelacakan Status Online</span>
                 </button>
               </nav>
             ) : (
               /* =========================================================================
                  STAFF / ASN NAVIGATION: Menampilkan menu operasional dinas sesuai peran.
                  ========================================================================= */
-              <nav className="flex items-center gap-1 text-xs font-bold">
+              <nav className="flex items-center gap-2 text-sm sm:text-base font-bold">
                 <button
                   onClick={() => setActiveView('public_portal')}
-                  className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
                     activeView === 'public_portal'
                       ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/50'
+                      : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/60'
                   }`}
                 >
-                  <Layers className="w-3.5 h-3.5" />
-                  Beranda PTSP
+                  <Layers className="w-4 h-4" />
+                  <span>Beranda PTSP</span>
                 </button>
 
                 <button
                   onClick={() => setActiveView('tracking_view')}
-                  className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
                     activeView === 'tracking_view'
                       ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/50'
+                      : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-100/60'
                   }`}
                 >
-                  <Search className="w-3.5 h-3.5" />
-                  Pelacakan Status Online
+                  <Search className="w-4 h-4" />
+                  <span>Pelacakan Status Online</span>
                 </button>
 
-                <div className="h-4 w-px bg-slate-300 mx-1"></div>
+                <div className="h-5 w-px bg-slate-300 mx-1"></div>
 
                 {/* Operator PTSP Menu: untuk operator_ptsp & super_admin */}
                 {(currentRole === 'operator_ptsp' || currentRole === 'super_admin') && (
                   <button
                     onClick={() => setActiveView('operator_portal')}
-                    className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                    className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
                       activeView === 'operator_portal'
                         ? 'bg-blue-700 text-white shadow-xs'
                         : 'text-blue-900 hover:bg-blue-100/70'
                     }`}
                   >
-                    <FileCheck2 className="w-3.5 h-3.5" />
-                    Operator PTSP (Front Office)
+                    <FileCheck2 className="w-4 h-4" />
+                    <span>Operator PTSP (Front Office)</span>
                   </button>
                 )}
 
-                {/* Dashboard Admin Seksi: untuk seksi teknis & super_admin */}
-                {(['kasi_pendis', 'kasi_bimas_islam', 'penyelenggara_kristen', 'penyelenggara_hindu', 'kasubbag_kepegawaian'].includes(currentRole) || currentRole === 'super_admin') && (
+                {/* Menu Admin Seksi Otomatis Sesuai Seksi yang Login */}
+                {roleSeksi && (
+                  <button
+                    onClick={() => {
+                      setSelectedSeksiTab(roleSeksi);
+                      setActiveView('seksi_dashboard');
+                    }}
+                    className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
+                      activeView === 'seksi_dashboard'
+                        ? 'bg-teal-700 text-white shadow-xs'
+                        : 'text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200'
+                    }`}
+                    title={`Menu Resmi & Dashboard Khusus: ${SEKSI_CONFIG[roleSeksi].nama}`}
+                  >
+                    {getSeksiNavIcon(roleSeksi)}
+                    <span>Menu {SEKSI_CONFIG[roleSeksi].nama}</span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                      activeView === 'seksi_dashboard' ? 'bg-white/20 text-white' : 'bg-teal-200 text-teal-900'
+                    }`}>
+                      {SEKSI_CONFIG[roleSeksi].singkatan}
+                    </span>
+                  </button>
+                )}
+
+                {/* Dashboard Admin Seksi: khusus super_admin (untuk supervisi 5 seksi) */}
+                {currentRole === 'super_admin' && (
                   <button
                     onClick={() => setActiveView('seksi_dashboard')}
-                    className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                    className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
                       activeView === 'seksi_dashboard'
                         ? 'bg-teal-700 text-white shadow-xs'
                         : 'text-teal-900 hover:bg-teal-100/70'
                     }`}
                   >
-                    <Layers className="w-3.5 h-3.5" />
-                    Dashboard Admin Seksi
+                    <Layers className="w-4 h-4" />
+                    <span>Dashboard Semua Seksi (5 Seksi)</span>
                   </button>
                 )}
 
@@ -479,32 +549,32 @@ export const Header: React.FC<HeaderProps> = ({
                 {(currentRole === 'kepala_kantor' || currentRole === 'super_admin') && (
                   <button
                     onClick={() => setActiveView('kakan_tte')}
-                    className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                    className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
                       activeView === 'kakan_tte'
                         ? 'bg-rose-700 text-white shadow-xs'
                         : 'text-rose-900 hover:bg-rose-100/70'
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Persetujuan & TTE BSrE
+                    <Sparkles className="w-4 h-4" />
+                    <span>Persetujuan & TTE BSrE</span>
                   </button>
                 )}
 
                 {/* Super Admin Menu: khusus super_admin */}
                 {currentRole === 'super_admin' && (
                   <>
-                    <div className="h-4 w-px bg-slate-300 mx-1"></div>
+                    <div className="h-5 w-px bg-slate-300 mx-1"></div>
                     <button
                       onClick={() => setActiveView('super_admin_portal')}
-                      className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                      className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer text-sm sm:text-[15px] font-bold ${
                         activeView === 'super_admin_portal'
                           ? 'bg-purple-800 text-white shadow-xs ring-2 ring-purple-400'
                           : 'text-purple-900 bg-purple-50 hover:bg-purple-100/80 border border-purple-200'
                       }`}
                       title="Kelola Data Keseluruhan, Akun Semua Seksi, Layanan Berita, dan Web Resmi"
                     >
-                      <Crown className="w-3.5 h-3.5 text-amber-500" />
-                      Super Admin
+                      <Crown className="w-4 h-4 text-amber-500" />
+                      <span>Super Admin</span>
                     </button>
                   </>
                 )}
@@ -515,10 +585,10 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="hidden md:flex items-center gap-2">
               <button
                 onClick={onOpenValidatorModal}
-                className="text-[11px] font-bold text-slate-700 hover:text-emerald-800 bg-white border border-slate-200 hover:border-emerald-400 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                className="text-xs sm:text-sm font-bold text-slate-700 hover:text-emerald-800 bg-white border border-slate-200 hover:border-emerald-400 px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-2xs transition-all cursor-pointer"
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                Cek Validasi TTE
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Cek Validasi TTE</span>
               </button>
             </div>
           </div>
@@ -529,9 +599,10 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="md:hidden border-t border-slate-200 bg-white p-4 space-y-2 animate-in slide-in-from-top-2">
             <button
               onClick={() => { setActiveView('public_portal'); setMobileMenuOpen(false); }}
-              className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-800 hover:bg-slate-100"
+              className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
             >
-              Beranda PTSP
+              <Layers className="w-4 h-4 text-emerald-600" />
+              <span>Beranda PTSP</span>
             </button>
 
             {isPublic ? (
@@ -541,48 +612,40 @@ export const Header: React.FC<HeaderProps> = ({
                     setActiveView('public_portal'); 
                     setMobileMenuOpen(false);
                     setTimeout(() => {
-                      document.getElementById('menu-aplikasi-portal')?.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-teal-800 hover:bg-teal-50"
-                >
-                  Menu Aplikasi & Web Utama
-                </button>
-                <button
-                  onClick={() => { 
-                    setActiveView('public_portal'); 
-                    setMobileMenuOpen(false);
-                    setTimeout(() => {
                       document.getElementById('katalog-layanan')?.scrollIntoView({ behavior: 'smooth' });
                     }, 100);
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-800 hover:bg-slate-100"
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                 >
-                  Katalog Layanan PTSP
+                  <FileText className="w-4 h-4 text-emerald-600" />
+                  <span>Katalog Layanan PTSP</span>
                 </button>
                 <button
                   onClick={() => { onOpenPermohonanModal(); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-emerald-700 hover:bg-emerald-50"
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-black text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 flex items-center gap-2 cursor-pointer"
                 >
-                  + Ajukan Permohonan Baru
+                  <FileText className="w-4 h-4 text-amber-700" />
+                  <span>+ Ajukan Permohonan Baru</span>
                 </button>
                 <button
                   onClick={() => { setActiveView('tracking_view'); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-800 hover:bg-slate-100"
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                 >
-                  Pelacakan Status Online
+                  <Search className="w-4 h-4 text-emerald-600" />
+                  <span>Pelacakan Status Online</span>
                 </button>
                 <button
                   onClick={() => { onOpenValidatorModal(); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-800 hover:bg-slate-100"
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                 >
-                  Validasi Dokumen Elektronik
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Validasi Dokumen Elektronik</span>
                 </button>
 
                 <div className="pt-2 border-t border-slate-100">
                   <button
                     onClick={() => { setIsAccountModalOpen(true); setMobileMenuOpen(false); }}
-                    className="w-full py-2.5 px-3 rounded-xl bg-linear-to-r from-emerald-700 to-teal-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs"
+                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                   >
                     <LogIn className="w-4 h-4" />
                     <span>Login Petugas / ASN</span>
@@ -593,68 +656,95 @@ export const Header: React.FC<HeaderProps> = ({
               <>
                 <button
                   onClick={() => { onOpenPermohonanModal(); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-emerald-700 hover:bg-emerald-50"
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-black text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 flex items-center gap-2 cursor-pointer"
                 >
-                  + Ajukan Permohonan Baru
+                  <FileText className="w-4 h-4 text-amber-700" />
+                  <span>+ Ajukan Permohonan Baru</span>
                 </button>
                 <button
                   onClick={() => { setActiveView('tracking_view'); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-800 hover:bg-slate-100"
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                 >
-                  Pelacakan Status Online
+                  <Search className="w-4 h-4 text-emerald-600" />
+                  <span>Pelacakan Status Online</span>
                 </button>
 
                 {(currentRole === 'operator_ptsp' || currentRole === 'super_admin') && (
                   <button
                     onClick={() => { setActiveView('operator_portal'); setMobileMenuOpen(false); }}
-                    className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-blue-800 hover:bg-blue-50"
+                    className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-blue-900 hover:bg-blue-50 flex items-center gap-2 cursor-pointer"
                   >
-                    Menu Operator PTSP
+                    <FileCheck2 className="w-4 h-4 text-blue-600" />
+                    <span>Menu Operator PTSP</span>
                   </button>
                 )}
 
-                {(['kasi_pendis', 'kasi_bimas_islam', 'penyelenggara_kristen', 'penyelenggara_hindu', 'kasubbag_kepegawaian'].includes(currentRole) || currentRole === 'super_admin') && (
+                {/* Menu Admin Seksi Otomatis Sesuai Seksi yang Login */}
+                {roleSeksi && (
+                  <button
+                    onClick={() => { 
+                      setSelectedSeksiTab(roleSeksi);
+                      setActiveView('seksi_dashboard'); 
+                      setMobileMenuOpen(false); 
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-teal-900 bg-teal-50 hover:bg-teal-100 flex items-center justify-between border border-teal-200 cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      {getSeksiNavIcon(roleSeksi)}
+                      <span>Menu {SEKSI_CONFIG[roleSeksi].nama}</span>
+                    </span>
+                    <span className="text-xs bg-teal-200 text-teal-900 font-bold px-2 py-0.5 rounded-full">
+                      {SEKSI_CONFIG[roleSeksi].singkatan}
+                    </span>
+                  </button>
+                )}
+
+                {/* Super Admin: Supervisi 5 Seksi */}
+                {currentRole === 'super_admin' && (
                   <button
                     onClick={() => { setActiveView('seksi_dashboard'); setMobileMenuOpen(false); }}
-                    className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-teal-800 hover:bg-teal-50"
+                    className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-teal-900 hover:bg-teal-50 flex items-center gap-2 cursor-pointer"
                   >
-                    Dashboard Seksi & Integrasi
+                    <Layers className="w-4 h-4 text-teal-600" />
+                    <span>Dashboard Semua Seksi (5 Seksi)</span>
                   </button>
                 )}
 
                 {(currentRole === 'kepala_kantor' || currentRole === 'super_admin') && (
                   <button
                     onClick={() => { setActiveView('kakan_tte'); setMobileMenuOpen(false); }}
-                    className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-rose-800 hover:bg-rose-50"
+                    className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-rose-900 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
                   >
-                    Persetujuan & TTE BSrE
+                    <Sparkles className="w-4 h-4 text-rose-600" />
+                    <span>Persetujuan & TTE BSrE</span>
                   </button>
                 )}
 
                 {currentRole === 'super_admin' && (
                   <button
                     onClick={() => { setActiveView('super_admin_portal'); setMobileMenuOpen(false); }}
-                    className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-purple-900 bg-purple-50 hover:bg-purple-100 flex items-center justify-between"
+                    className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-purple-900 bg-purple-50 hover:bg-purple-100 flex items-center justify-between border border-purple-200 cursor-pointer"
                   >
-                    <span className="flex items-center gap-1.5">
-                      <Crown className="w-3.5 h-3.5 text-amber-500" />
-                      Menu Super Admin (Kelola Web)
+                    <span className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-amber-500" />
+                      <span>Menu Super Admin (Kelola Web)</span>
                     </span>
-                    <span className="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-0.5 rounded font-bold">Admin</span>
+                    <span className="text-xs bg-purple-200 text-purple-900 px-2 py-0.5 rounded-full font-bold">Admin</span>
                   </button>
                 )}
 
                 <button
                   onClick={() => { onOpenValidatorModal(); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-800 hover:bg-slate-100"
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                 >
-                  Validasi Dokumen Elektronik
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Validasi Dokumen Elektronik</span>
                 </button>
 
                 <div className="pt-2 border-t border-slate-100">
                   <button
                     onClick={() => { logoutToPublic(); setMobileMenuOpen(false); }}
-                    className="w-full py-2 px-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs flex items-center justify-center gap-2"
+                    className="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Keluar (Kembali ke Mode Publik)</span>

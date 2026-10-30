@@ -22,7 +22,9 @@ import {
   Send,
   Eye,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  Paperclip,
+  Download
 } from 'lucide-react';
 
 interface OperatorPTSPViewProps {
@@ -284,6 +286,22 @@ export const OperatorPTSPView: React.FC<OperatorPTSPViewProps> = ({
                         </span>
                         <div className="font-bold text-slate-900 line-clamp-1">{item.namaLayanan}</div>
                         <div className="text-[11px] text-slate-500 line-clamp-1">{item.perihal}</div>
+                        {item.berkasDraftTTE && (
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200/80 w-fit">
+                            <Paperclip className="w-3 h-3 text-teal-600 shrink-0" />
+                            <span className="font-bold truncate max-w-[170px]">{item.berkasDraftTTE.namaFile}</span>
+                            {item.berkasDraftTTE.fileUrl && (
+                              <a
+                                href={item.berkasDraftTTE.fileUrl}
+                                download={item.berkasDraftTTE.namaFile}
+                                className="text-teal-700 hover:text-teal-950 ml-1"
+                                title="Unduh berkas"
+                              >
+                                <Download className="w-2.5 h-2.5 inline" />
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </td>
 
                       {/* Pemohon */}

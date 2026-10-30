@@ -3,9 +3,10 @@ import { usePTSP } from '../../context/PTSPContext';
 import { MessageSquare, X, ExternalLink, ShieldCheck } from 'lucide-react';
 
 export const WhatsAppAlertToast: React.FC = () => {
-  const { whatsAppAlert, dismissWhatsAppAlert, setSelectedTrackingResi, setActiveView } = usePTSP();
+  const { currentRole, whatsAppAlert, dismissWhatsAppAlert, setSelectedTrackingResi, setActiveView } = usePTSP();
 
-  if (!whatsAppAlert || !whatsAppAlert.isOpen) return null;
+  // Pengguna publik tidak menampilkan popup notifikasi
+  if (currentRole === 'pemohon' || !whatsAppAlert || !whatsAppAlert.isOpen) return null;
 
   const handleOpenTracking = () => {
     if (whatsAppAlert.nomorResi) {

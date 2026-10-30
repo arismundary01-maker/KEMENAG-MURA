@@ -250,6 +250,9 @@ const MainAppContent: React.FC = () => {
       <OfficialDocumentModal
         permohonan={previewDocumentPermohonan}
         onClose={() => setPreviewDocumentPermohonan(null)}
+        onProceedToSign={() => {
+          setActiveView('kakan_tte');
+        }}
       />
 
       <ReceiptSlipModal
@@ -262,8 +265,8 @@ const MainAppContent: React.FC = () => {
         onClose={() => setIsValidatorModalOpen(false)}
       />
 
-      {/* 5. Real-Time WhatsApp Alert Simulation Toast */}
-      <WhatsAppAlertToast />
+      {/* 5. Real-Time WhatsApp Alert Simulation Toast - Disembunyikan untuk Pengguna Publik */}
+      {currentRole !== 'pemohon' && <WhatsAppAlertToast />}
     </div>
   );
 };
