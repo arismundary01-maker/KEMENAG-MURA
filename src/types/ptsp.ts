@@ -209,6 +209,7 @@ export interface BeritaItem {
 export interface AkunPengguna {
   id: string;
   username: string;
+  password?: string;
   namaLengkap: string;
   role: UserRole;
   seksi?: SeksiType;

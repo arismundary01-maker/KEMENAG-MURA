@@ -192,20 +192,30 @@ export const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({ isOp
                           </span>
                         )}
                       </div>
-                      <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate">{acc.namaLengkap}</h4>
-                      <p className="text-[11px] text-slate-600 font-medium truncate">{acc.jabatan}</p>
-                      {acc.nip && (
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate">
+                        {acc.role === 'operator_ptsp' ? 'Operator PTSP (Front Office)' : acc.namaLengkap}
+                      </h4>
+                      <p className="text-[11px] text-slate-600 font-medium truncate">
+                        {acc.role === 'operator_ptsp' ? 'Loket Pelayanan Terpadu Satu Pintu' : acc.jabatan}
+                      </p>
+                      {acc.role !== 'operator_ptsp' && acc.nip && (
                         <p className="text-[10px] text-slate-500 font-mono">NIP: {acc.nip}</p>
                       )}
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-slate-600 mt-2 line-clamp-2 bg-white/80 p-2 rounded-xl border border-slate-100">
-                    {acc.deskripsiTugas}
-                  </p>
+                  {acc.role !== 'operator_ptsp' && (
+                    <p className="text-[11px] text-slate-600 mt-2 line-clamp-2 bg-white/80 p-2 rounded-xl border border-slate-100">
+                      {acc.deskripsiTugas}
+                    </p>
+                  )}
 
                   <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500 font-mono">@{acc.username}</span>
+                    {acc.role !== 'operator_ptsp' ? (
+                      <span className="text-[10px] text-slate-500 font-mono">@{acc.username}</span>
+                    ) : (
+                      <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Akses Front Office</span>
+                    )}
                     <button 
                       type="button"
                       className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs ${

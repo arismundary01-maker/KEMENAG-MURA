@@ -1229,6 +1229,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-super-admin',
     username: 'superadmin.kemenag',
+    password: 'superadmin2026',
     namaLengkap: 'Pranata Komputer Ahli / Super Admin',
     role: 'super_admin',
     jabatan: 'Super Administrator & Pengelola Sistem Portal Utama',
@@ -1245,6 +1246,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-pemohon',
     username: 'pemohon.warga',
+    password: 'warga123',
     namaLengkap: 'Masyarakat / Pemohon Layanan',
     role: 'pemohon',
     jabatan: 'Masyarakat Umum / Lembaga Keagamaan',
@@ -1260,6 +1262,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-operator-ptsp',
     username: 'operator.ptsp',
+    password: 'operator123',
     namaLengkap: 'Rahmat Hidayat, A.Md',
     role: 'operator_ptsp',
     jabatan: 'Petugas Front Office / Operator PTSP',
@@ -1276,6 +1279,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-pendis',
     username: 'kasi.pendis',
+    password: 'pendis123',
     namaLengkap: 'Drs. H. Ahmad Fauzi, M.Pd.I',
     role: 'kasi_pendis',
     seksi: 'pendis',
@@ -1293,6 +1297,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-bimas-islam',
     username: 'kasi.bimasislam',
+    password: 'bimasislam123',
     namaLengkap: 'H. Muhammad Ridwan, S.Ag., M.H',
     role: 'kasi_bimas_islam',
     seksi: 'bimas_islam',
@@ -1310,6 +1315,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-bimas-kristen',
     username: 'penyelenggara.kristen',
+    password: 'kristen123',
     namaLengkap: 'Marnix S. Pandiangan, S.Th., M.Pd.K',
     role: 'penyelenggara_kristen',
     seksi: 'bimas_kristen',
@@ -1327,6 +1333,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-bimas-hindu',
     username: 'penyelenggara.hindu',
+    password: 'hindu123',
     namaLengkap: 'I Wayan Sudiarta, S.Ag',
     role: 'penyelenggara_hindu',
     seksi: 'bimas_hindu',
@@ -1344,6 +1351,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-kepegawaian',
     username: 'kasubbag.tu',
+    password: 'kepegawaian123',
     namaLengkap: 'H. Sarifuddin, S.E., M.Si',
     role: 'kasubbag_kepegawaian',
     seksi: 'kepegawaian',
@@ -1361,6 +1369,7 @@ export const DAFTAR_AKUN_SISTEM: import('../types/ptsp').AkunPengguna[] = [
   {
     id: 'acc-pimpinan',
     username: 'kakan.kemenag',
+    password: 'pimpinan123',
     namaLengkap: 'Dr. H. Hermadi, S.Ag., M.Si',
     role: 'kepala_kantor',
     jabatan: 'Kepala Kantor Kementerian Agama Kab. Murung Raya',

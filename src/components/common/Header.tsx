@@ -457,29 +457,31 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                {/* Staff Account Info & Switcher Button */}
-                <button
-                  onClick={() => setIsAccountModalOpen(true)}
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-emerald-500/50 hover:border-amber-400 bg-white/10 hover:bg-white/20 transition-all text-left shadow-xs group cursor-pointer text-white"
-                  title="Ganti Akun Petugas / ASN"
-                >
-                  <img 
-                    src={activeAccount.avatar} 
-                    alt={activeAccount.namaLengkap} 
-                    className="w-8 h-8 rounded-lg object-cover border border-amber-400/80 shadow-2xs group-hover:ring-2 group-hover:ring-amber-300"
-                  />
-                  <div className="hidden sm:block">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${activeAccount.badgeColor}`}>
-                        {activeAccount.badgeLabel}
-                      </span>
+                {/* Staff Account Info & Switcher Button - Disembunyikan saat login sebagai operator sesuai permintaan user */}
+                {currentRole !== 'operator_ptsp' && (
+                  <button
+                    onClick={() => setIsAccountModalOpen(true)}
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-emerald-500/50 hover:border-amber-400 bg-white/10 hover:bg-white/20 transition-all text-left shadow-xs group cursor-pointer text-white"
+                    title="Ganti Akun Petugas / ASN"
+                  >
+                    <img 
+                      src={activeAccount.avatar} 
+                      alt={activeAccount.namaLengkap} 
+                      className="w-8 h-8 rounded-lg object-cover border border-amber-400/80 shadow-2xs group-hover:ring-2 group-hover:ring-amber-300"
+                    />
+                    <div className="hidden sm:block">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${activeAccount.badgeColor}`}>
+                          {activeAccount.badgeLabel}
+                        </span>
+                      </div>
+                      <p className="text-xs font-black text-white leading-tight truncate max-w-[130px]">
+                        {activeAccount.namaLengkap}
+                      </p>
                     </div>
-                    <p className="text-xs font-black text-white leading-tight truncate max-w-[130px]">
-                      {activeAccount.namaLengkap}
-                    </p>
-                  </div>
-                  <UserCheck className="w-4 h-4 text-amber-300 group-hover:text-amber-200" />
-                </button>
+                    <UserCheck className="w-4 h-4 text-amber-300 group-hover:text-amber-200" />
+                  </button>
+                )}
 
                 {/* Logout to Public Button */}
                 <button

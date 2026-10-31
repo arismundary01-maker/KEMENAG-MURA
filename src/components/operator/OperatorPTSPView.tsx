@@ -142,10 +142,9 @@ export const OperatorPTSPView: React.FC<OperatorPTSPViewProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-400/20 text-blue-300 border border-blue-400/30">
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-400/20 text-blue-300 border border-blue-400/30">
                   Front Office PTSP Kemenag Mura
                 </span>
-                <span className="text-xs text-blue-200">Petugas: Rahmat Hidayat, A.Md</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 Menu Pemrosesan & Validasi Berkas Masuk

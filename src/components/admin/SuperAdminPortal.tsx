@@ -39,6 +39,7 @@ import {
   Save, 
   RefreshCw, 
   Eye, 
+  EyeOff,
   Check, 
   X, 
   AlertTriangle, 
@@ -86,6 +87,8 @@ export const SuperAdminPortal: React.FC = () => {
   // Account Form State
   const [formNamaLengkap, setFormNamaLengkap] = useState('');
   const [formUsername, setFormUsername] = useState('');
+  const [formPassword, setFormPassword] = useState('');
+  const [showFormPassword, setShowFormPassword] = useState(false);
   const [formRole, setFormRole] = useState<UserRole>('operator_ptsp');
   const [formSeksi, setFormSeksi] = useState<SeksiType | ''>('');
   const [formJabatan, setFormJabatan] = useState('');
@@ -112,6 +115,8 @@ export const SuperAdminPortal: React.FC = () => {
   const handleOpenTambahAkun = () => {
     setFormNamaLengkap('');
     setFormUsername('');
+    setFormPassword('');
+    setShowFormPassword(false);
     setFormRole('operator_ptsp');
     setFormSeksi('');
     setFormJabatan('Petugas Front Office');
@@ -126,6 +131,8 @@ export const SuperAdminPortal: React.FC = () => {
     setEditingAkun(akun);
     setFormNamaLengkap(akun.namaLengkap);
     setFormUsername(akun.username);
+    setFormPassword(akun.password || '');
+    setShowFormPassword(false);
     setFormRole(akun.role);
     setFormSeksi(akun.seksi || '');
     setFormJabatan(akun.jabatan);
@@ -169,6 +176,7 @@ export const SuperAdminPortal: React.FC = () => {
       editAkun(editingAkun.id, {
         namaLengkap: formNamaLengkap,
         username: formUsername,
+        password: formPassword || editingAkun.password || 'Kemenag@2026',
         role: formRole,
         seksi: formSeksi ? formSeksi as SeksiType : undefined,
         jabatan: formJabatan,
@@ -184,6 +192,7 @@ export const SuperAdminPortal: React.FC = () => {
       tambahAkun({
         namaLengkap: formNamaLengkap,
         username: formUsername,
+        password: formPassword || 'Kemenag@2026',
         role: formRole,
         seksi: formSeksi ? formSeksi as SeksiType : undefined,
         jabatan: formJabatan,
@@ -201,6 +210,7 @@ export const SuperAdminPortal: React.FC = () => {
   const handleResetPassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetPassAkun || !newPassphraseInput) return;
+    editAkun(resetPassAkun.id, { password: newPassphraseInput });
     setResetSuccessMsg(`Kata sandi / PIN TTE akun @${resetPassAkun.username} (${resetPassAkun.namaLengkap}) berhasil diperbarui.`);
     setTimeout(() => {
       setResetPassAkun(null);
@@ -972,6 +982,35 @@ export const SuperAdminPortal: React.FC = () => {
                     placeholder="Contoh: kasi.pendis"
                     className="w-full p-2.5 rounded-xl border border-slate-300 font-mono"
                   />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-slate-700">Password / Kata Sandi *</label>
+                    {editingAkun && (
+                      <span className="text-[10px] text-emerald-700 font-semibold">
+                        (Isi untuk ganti sandi)
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showFormPassword ? 'text' : 'password'}
+                      required={!editingAkun}
+                      value={formPassword}
+                      onChange={(e) => setFormPassword(e.target.value)}
+                      placeholder={editingAkun ? 'Ketik kata sandi baru...' : 'Buat kata sandi akun...'}
+                      className="w-full p-2.5 pr-10 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowFormPassword(!showFormPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      title={showFormPassword ? 'Sembunyikan password' : 'Lihat password'}
+                    >
+                      {showFormPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
