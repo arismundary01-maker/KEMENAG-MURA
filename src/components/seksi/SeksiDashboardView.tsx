@@ -95,6 +95,30 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
   // Simulation state for app launch modal
   const [activeLaunchedApp, setActiveLaunchedApp] = useState<AplikasiIntegrasi | null>(null);
   const [syncingAppId, setSyncingAppId] = useState<string | null>(null);
+  const [showSeksiPosterModal, setShowSeksiPosterModal] = useState(false);
+
+  const SEKSI_POSTER_MAP: Record<SeksiType, { image: string; title: string }> = {
+    kepegawaian: {
+      image: '/assets/aistudio/01_Layanan_Subbag_TU_Kepegawaian_8735249f.png',
+      title: 'Layanan Subbag TU / Kepegawaian'
+    },
+    pendis: {
+      image: '/assets/aistudio/Poster_Layanan_PTSP_Pendidikan_Islam_7ef9f8db.png',
+      title: 'Layanan PTSP Pendidikan Islam'
+    },
+    bimas_islam: {
+      image: '/assets/aistudio/02_Layanan_Bimas_Islam_d0a11874.png',
+      title: 'Layanan Bimas Islam'
+    },
+    bimas_kristen: {
+      image: '/assets/aistudio/03_Layanan_Bimas_Kristen_b15ee7ea.png',
+      title: 'Layanan Bimas Kristen'
+    },
+    bimas_hindu: {
+      image: '/assets/aistudio/04_Layanan_Bimas_Hindu_fa5f5829.png',
+      title: 'Layanan Bimas Hindu'
+    }
+  };
 
   const seksiInfo = SEKSI_CONFIG[selectedSeksiTab];
   const seksiApps = APLIKASI_INTEGRASI.filter(a => a.seksi === selectedSeksiTab);
@@ -371,22 +395,33 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
       )}
 
       {/* 2. SECTION BANNER & METRICS */}
-      <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 mb-6 shadow-xl border border-emerald-800/30">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div 
+        className="relative overflow-hidden text-white rounded-3xl p-6 sm:p-8 mb-6 shadow-xl border border-white/10 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-semibold mb-2">
-              <ShieldCheck className="w-3.5 h-3.5" /> Dashboard Pengawasan & Data Seksi
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-300 border border-white/20 text-xs font-semibold mb-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Dashboard Pengawasan & Data Seksi
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
               {seksiInfo.nama}
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-200/90 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-200 mt-1 max-w-2xl">
               {seksiInfo.deskripsi}
             </p>
-            <div className="mt-3 flex items-center gap-3 text-xs text-slate-300">
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-300">
               <span>Pejabat: <strong className="text-white">{seksiInfo.kepala}</strong></span>
               <span>•</span>
               <span className="font-mono">NIP: {seksiInfo.nip}</span>
+
+              <button
+                type="button"
+                onClick={() => setShowSeksiPosterModal(true)}
+                className="ml-0 sm:ml-2 px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-lg shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Lihat Poster Resmi {seksiInfo.singkatan}</span>
+              </button>
             </div>
           </div>
 
@@ -1492,6 +1527,90 @@ export const SeksiDashboardView: React.FC<SeksiDashboardViewProps> = ({
                 className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl cursor-pointer"
               >
                 Selesai / Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Pratinjau Poster Layanan Seksi */}
+      {showSeksiPosterModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="relative bg-slate-900 border border-slate-700 rounded-3xl max-w-4xl max-h-[94vh] flex flex-col shadow-2xl overflow-hidden w-full">
+            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 px-5 py-3.5 border-b border-slate-800 flex items-center justify-between gap-3 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>{SEKSI_POSTER_MAP[selectedSeksiTab].title}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-cyan-300 border border-white/15">
+                      Poster Resmi
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-300">
+                    Standar Pelayanan PTSP Kemenag Murung Raya • {seksiInfo.nama}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={SEKSI_POSTER_MAP[selectedSeksiTab].image}
+                  download={`Poster_${seksiInfo.singkatan.replace(/\s+/g, '_')}.png`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Buka Resolusi Asli</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowSeksiPosterModal(false)}
+                  className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Seksi Selector Tabs in Modal */}
+            <div className="bg-slate-950 px-4 py-2 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto scrollbar-none text-xs">
+              <span className="text-slate-400 font-bold uppercase text-[10px] mr-1 shrink-0">Pilih Seksi:</span>
+              {(['kepegawaian', 'pendis', 'bimas_islam', 'bimas_kristen', 'bimas_hindu'] as SeksiType[]).map((seksiKey) => (
+                <button
+                  key={seksiKey}
+                  type="button"
+                  onClick={() => setSelectedSeksiTab(seksiKey)}
+                  className={`px-3 py-1 rounded-lg font-bold text-xs whitespace-nowrap transition-all cursor-pointer ${
+                    selectedSeksiTab === seksiKey
+                      ? 'bg-amber-400 text-slate-950 shadow-xs'
+                      : 'bg-white/5 hover:bg-white/15 text-slate-300'
+                  }`}
+                >
+                  {SEKSI_CONFIG[seksiKey].singkatan}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-3 sm:p-5 overflow-auto flex items-center justify-center bg-slate-950/70 min-h-[50vh]">
+              <img
+                src={SEKSI_POSTER_MAP[selectedSeksiTab].image}
+                alt={SEKSI_POSTER_MAP[selectedSeksiTab].title}
+                className="max-h-[68vh] w-auto rounded-xl shadow-2xl object-contain border border-white/10"
+              />
+            </div>
+
+            <div className="bg-slate-900 px-5 py-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span className="text-cyan-300">Format Resmi Kementerian Agama • PTSP Modern, Cepat & Bebas Pungli</span>
+              <button
+                type="button"
+                onClick={() => setShowSeksiPosterModal(false)}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                Tutup
               </button>
             </div>
           </div>

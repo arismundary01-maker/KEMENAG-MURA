@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePTSP } from '../../context/PTSPContext';
 import { SEKSI_CONFIG } from '../../data/initialData';
 import { SeksiType, LayananKatalog, BeritaItem, KepalaKantorHistory, MenuAplikasiWeb } from '../../types/ptsp';
@@ -34,7 +34,10 @@ import {
   Info,
   Layers,
   Compass,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Eye,
+  Maximize2,
+  Image as ImageIcon
 } from 'lucide-react';
 import { WebPortalViewerModal } from './WebPortalViewerModal';
 
@@ -78,6 +81,204 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
   const [trackingInput, setTrackingInput] = useState('');
   const [selectedBerita, setSelectedBerita] = useState<BeritaItem | null>(null);
   const [selectedDetailLayanan, setSelectedDetailLayanan] = useState<LayananKatalog | null>(null);
+
+  // Poster Resmi Layanan Seluruh Seksi / Unit Layanan dari Unggahan Pengguna
+  const POSTER_LAYANAN_SEKSI: Record<SeksiType, {
+    nama: string;
+    singkatan: string;
+    image: string;
+    slogan: string;
+    tagline: string;
+    pilars: { label: string; sub: string }[];
+    borderActive: string;
+    bgActiveGradient: string;
+    bgInactiveGradient: string;
+    accentBadge: string;
+    accentPill: string;
+    heroGradient: string;
+    textHover: string;
+    accentGlow: string;
+  }> = {
+    kepegawaian: {
+      nama: 'Tata Usaha / Kepegawaian',
+      singkatan: 'Subbag TU',
+      image: '/assets/aistudio/01_Layanan_Subbag_TU_Kepegawaian_8735249f.png',
+      slogan: 'Melayani dengan Profesional, Cepat dan Tepat',
+      tagline: 'Layanan Subbag TU / Kepegawaian',
+      pilars: [
+        { label: 'Profesional', sub: 'Standar ASN' },
+        { label: 'Integritas', sub: 'Bebas Pungli' },
+        { label: 'Melayani', sub: 'Cepat & Tepat' },
+        { label: 'Akuntabel', sub: 'Tertib Administrasi' }
+      ],
+      borderActive: 'border-purple-500 shadow-md ring-2 ring-purple-500/40 text-white',
+      bgActiveGradient: 'from-purple-950/85 via-indigo-950/90 to-purple-950/95',
+      bgInactiveGradient: 'from-white/92 via-white/88 to-purple-50/92',
+      accentBadge: 'bg-purple-600 text-white',
+      accentPill: 'bg-purple-100 text-purple-900 border-purple-200',
+      heroGradient: 'linear-gradient(to right, rgba(59, 7, 100, 0.95) 0%, rgba(30, 27, 75, 0.90) 55%, rgba(15, 23, 42, 0.96) 100%)',
+      textHover: 'group-hover:text-purple-700',
+      accentGlow: 'bg-purple-500/20'
+    },
+    pendis: {
+      nama: 'Pendidikan Islam (Pendis)',
+      singkatan: 'Pendis',
+      image: '/assets/aistudio/Poster_Layanan_PTSP_Pendidikan_Islam_7ef9f8db.png',
+      slogan: 'Melayani dengan Profesional, Cepat dan Tepat',
+      tagline: 'Layanan PTSP Pendidikan Islam',
+      pilars: [
+        { label: 'Cepat', sub: 'SOP Terukur' },
+        { label: 'Profesional', sub: 'Tenaga Ahli' },
+        { label: 'Transparan', sub: 'Bebas Pungli' },
+        { label: 'Ramah', sub: 'Melayani Umat' }
+      ],
+      borderActive: 'border-emerald-500 shadow-md ring-2 ring-emerald-500/40 text-white',
+      bgActiveGradient: 'from-emerald-950/85 via-emerald-900/90 to-emerald-950/95',
+      bgInactiveGradient: 'from-white/92 via-white/88 to-emerald-50/92',
+      accentBadge: 'bg-emerald-600 text-white',
+      accentPill: 'bg-emerald-100 text-emerald-900 border-emerald-200',
+      heroGradient: 'linear-gradient(to right, rgba(6, 78, 59, 0.95) 0%, rgba(4, 47, 46, 0.90) 55%, rgba(15, 23, 42, 0.96) 100%)',
+      textHover: 'group-hover:text-emerald-700',
+      accentGlow: 'bg-emerald-500/20'
+    },
+    bimas_islam: {
+      nama: 'Bimbingan Masyarakat Islam',
+      singkatan: 'Bimas Islam',
+      image: '/assets/aistudio/02_Layanan_Bimas_Islam_d0a11874.png',
+      slogan: 'Membina Umat Islam Menuju Masyarakat yang Religius, Moderat dan Berakhlak Mulia',
+      tagline: 'Layanan Bimas Islam',
+      pilars: [
+        { label: 'Berilmu', sub: 'Beragama dg Ilmu' },
+        { label: 'Ikhlas', sub: 'Beribadah dg Hati' },
+        { label: 'Akhlak Mulia', sub: 'Dalam Kehidupan' },
+        { label: 'Moderat', sub: 'Ukhuwah Islamiyah' }
+      ],
+      borderActive: 'border-teal-500 shadow-md ring-2 ring-teal-500/40 text-white',
+      bgActiveGradient: 'from-teal-950/85 via-emerald-950/90 to-teal-950/95',
+      bgInactiveGradient: 'from-white/92 via-white/88 to-teal-50/92',
+      accentBadge: 'bg-teal-600 text-white',
+      accentPill: 'bg-teal-100 text-teal-900 border-teal-200',
+      heroGradient: 'linear-gradient(to right, rgba(17, 94, 89, 0.95) 0%, rgba(6, 78, 59, 0.90) 55%, rgba(15, 23, 42, 0.96) 100%)',
+      textHover: 'group-hover:text-teal-700',
+      accentGlow: 'bg-teal-500/20'
+    },
+    bimas_kristen: {
+      nama: 'Bimbingan Masyarakat Kristen',
+      singkatan: 'Bimas Kristen',
+      image: '/assets/aistudio/03_Layanan_Bimas_Kristen_b15ee7ea.png',
+      slogan: 'Melayani dengan Kasih, Membangun Kerukunan, Menuju Masyarakat yang Harmonis',
+      tagline: 'Layanan Bimas Kristen',
+      pilars: [
+        { label: 'Dalam Kasih', sub: 'Bersama Melayani' },
+        { label: 'Kerukunan', sub: 'Dalam Perbedaan' },
+        { label: 'Harmonis', sub: 'Kebersamaan Umat' },
+        { label: 'Transparan', sub: 'Pelayanan Kasih' }
+      ],
+      borderActive: 'border-blue-500 shadow-md ring-2 ring-blue-500/40 text-white',
+      bgActiveGradient: 'from-blue-950/85 via-indigo-950/90 to-blue-950/95',
+      bgInactiveGradient: 'from-white/92 via-white/88 to-blue-50/92',
+      accentBadge: 'bg-blue-600 text-white',
+      accentPill: 'bg-blue-100 text-blue-900 border-blue-200',
+      heroGradient: 'linear-gradient(to right, rgba(30, 58, 138, 0.95) 0%, rgba(49, 46, 129, 0.90) 55%, rgba(15, 23, 42, 0.96) 100%)',
+      textHover: 'group-hover:text-blue-700',
+      accentGlow: 'bg-blue-500/20'
+    },
+    bimas_hindu: {
+      nama: 'Bimbingan Masyarakat Hindu',
+      singkatan: 'Bimas Hindu',
+      image: '/assets/aistudio/04_Layanan_Bimas_Hindu_fa5f5829.png',
+      slogan: 'Melayani dengan Tulus, Membina Umat Hindu, Menuju Kehidupan yang Harmonis',
+      tagline: 'Layanan Bimas Hindu',
+      pilars: [
+        { label: 'Dharma', sub: 'Kebenaran Sejati' },
+        { label: 'Toleransi', sub: 'Saling Menghargai' },
+        { label: 'Kerukunan', sub: 'Hidup Berdampingan' },
+        { label: 'Tulus', sub: 'Pelayanan Prima' }
+      ],
+      borderActive: 'border-amber-500 shadow-md ring-2 ring-amber-500/40 text-white',
+      bgActiveGradient: 'from-amber-950/85 via-orange-950/90 to-amber-950/95',
+      bgInactiveGradient: 'from-white/92 via-white/88 to-amber-50/92',
+      accentBadge: 'bg-amber-600 text-white',
+      accentPill: 'bg-amber-100 text-amber-900 border-amber-200',
+      heroGradient: 'linear-gradient(to right, rgba(120, 53, 15, 0.95) 0%, rgba(154, 52, 18, 0.90) 55%, rgba(15, 23, 42, 0.96) 100%)',
+      textHover: 'group-hover:text-amber-700',
+      accentGlow: 'bg-amber-500/20'
+    }
+  };
+
+  const [selectedPosterSeksi, setSelectedPosterSeksi] = useState<SeksiType | null>(null);
+
+  // Typewriter Animation: "Layanan Keagamaan Modern, Cepat & Bebas Pungli"
+  // Huruf demi huruf muncul dan berganti warna dinamis
+  const FULL_HEADLINE = 'Layanan Keagamaan Modern, Cepat & Bebas Pungli';
+  const COLOR_PALETTES = [
+    {
+      gradient: 'from-amber-300 via-yellow-200 to-amber-400',
+      cursorColor: 'bg-amber-400',
+      glowColor: 'drop-shadow-[0_2px_14px_rgba(251,191,36,0.6)]',
+      name: 'Emas Mulia'
+    },
+    {
+      gradient: 'from-cyan-300 via-teal-200 to-emerald-300',
+      cursorColor: 'bg-cyan-400',
+      glowColor: 'drop-shadow-[0_2px_14px_rgba(56,189,248,0.6)]',
+      name: 'Pirus Bahari'
+    },
+    {
+      gradient: 'from-fuchsia-300 via-pink-200 to-purple-300',
+      cursorColor: 'bg-pink-400',
+      glowColor: 'drop-shadow-[0_2px_14px_rgba(232,121,249,0.6)]',
+      name: 'Violet Anggun'
+    },
+    {
+      gradient: 'from-sky-300 via-indigo-200 to-cyan-300',
+      cursorColor: 'bg-sky-400',
+      glowColor: 'drop-shadow-[0_2px_14px_rgba(56,189,248,0.6)]',
+      name: 'Biru Samudera'
+    },
+    {
+      gradient: 'from-emerald-300 via-lime-200 to-teal-300',
+      cursorColor: 'bg-emerald-400',
+      glowColor: 'drop-shadow-[0_2px_14px_rgba(52,211,153,0.6)]',
+      name: 'Zamrud Tropis'
+    }
+  ];
+
+  const [typedHeadline, setTypedHeadline] = useState(FULL_HEADLINE);
+  const [paletteIndex, setPaletteIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+
+    if (!isDeleting) {
+      if (typedHeadline.length < FULL_HEADLINE.length) {
+        timer = setTimeout(() => {
+          setTypedHeadline(FULL_HEADLINE.slice(0, typedHeadline.length + 1));
+        }, 55);
+      } else {
+        // Tahan tulisan utuh selama 3.5 detik untuk dibaca pengguna
+        timer = setTimeout(() => {
+          setIsDeleting(true);
+        }, 3500);
+      }
+    } else {
+      if (typedHeadline.length > 0) {
+        timer = setTimeout(() => {
+          setTypedHeadline(FULL_HEADLINE.slice(0, typedHeadline.length - 1));
+        }, 25);
+      } else {
+        // Setelah terhapus, beralih ke variasi gradien warna berikutnya
+        setIsDeleting(false);
+        setPaletteIndex((prev) => (prev + 1) % COLOR_PALETTES.length);
+        timer = setTimeout(() => {
+          setTypedHeadline(FULL_HEADLINE.slice(0, 1));
+        }, 350);
+      }
+    }
+
+    return () => clearTimeout(timer);
+  }, [typedHeadline, isDeleting]);
 
   // ==========================================
   // SUPER ADMIN DIRECT MANAGEMENT STATES
@@ -471,7 +672,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
+    <div className="min-h-screen bg-[#edf9f1] pb-16">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
@@ -480,20 +681,36 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       )}
 
-      {/* 1. HERO SECTION */}
-      <section className="relative bg-linear-to-b from-emerald-900 via-emerald-800 to-teal-900 text-white overflow-hidden py-12 md:py-20 px-4 sm:px-6">
+      {/* 1. HERO SECTION - Berlatar Belakang Gedung Kantor Kementerian Agama */}
+      <section className="relative text-white overflow-hidden py-14 md:py-24 px-4 sm:px-6 border-b border-emerald-700/40">
+        {/* Background Foto Gedung Kantor Kementerian Agama */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <img 
+            src="/assets/aistudio/gedung_kantor_kemenag_beranda.jpg" 
+            alt="Gedung Kantor Kementerian Agama Republik Indonesia" 
+            className="w-full h-full object-cover object-center scale-[1.01] filter brightness-95 contrast-105"
+          />
+          {/* Vignette semi-transparan elegan agar foto gedung kantor kementerian agama terlihat jelas dan teks terbaca tajam */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#012215]/70 via-[#012618]/55 to-[#011a10]/80 pointer-events-none"></div>
+        </div>
+
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-emerald-400/20 blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-amber-400/15 blur-3xl pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-700/60 border border-emerald-400/30 text-emerald-200 text-xs font-semibold mb-4 backdrop-blur-xs">
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/70 border border-emerald-400/40 text-emerald-200 text-xs font-semibold mb-4 backdrop-blur-xs shadow-xs">
+              <ShieldCheck className="w-4 h-4 text-amber-300" />
               Sistem Pelayanan Terpadu Satu Pintu & TTE BSrE Terintegrasi
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white mb-4 leading-tight">
-              Layanan Keagamaan Modern, Cepat & Bebas Pungli
+            {/* Typewriter Animated Headline with Letter-by-Letter and Dynamic Colors */}
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 leading-tight min-h-[4rem] sm:min-h-[5.5rem] flex items-center justify-center flex-wrap">
+              <span className={`bg-gradient-to-r ${COLOR_PALETTES[paletteIndex].gradient} bg-clip-text text-transparent transition-all duration-300 ${COLOR_PALETTES[paletteIndex].glowColor}`}>
+                {typedHeadline}
+              </span>
+              <span className={`inline-block w-1 sm:w-1.5 h-8 sm:h-12 ml-1.5 ${COLOR_PALETTES[paletteIndex].cursorColor} animate-pulse rounded-full align-middle`} />
             </h1>
 
             <p className="text-sm sm:text-base text-emerald-100 font-medium mb-8 leading-relaxed">
@@ -503,7 +720,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
             </p>
 
             {/* Quick Tracking Resi Input Box */}
-            <div className="bg-white p-2.5 sm:p-3 rounded-2xl shadow-2xl max-w-xl mx-auto border border-emerald-200/40">
+            <div className="bg-white p-2.5 sm:p-3 rounded-2xl shadow-2xl max-w-xl mx-auto border-2 border-emerald-400/50">
               <form onSubmit={handleTrackingSubmit} className="flex flex-col sm:flex-row items-center gap-2">
                 <div className="relative flex-1 w-full">
                   <Search className="w-5 h-5 text-slate-400 absolute left-3 top-3" />
@@ -548,14 +765,14 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <button
                 onClick={() => onOpenPermohonanModal()}
-                className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-emerald-950 font-black rounded-xl text-sm shadow-lg hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer"
+                className="px-6 py-3 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-emerald-950 font-black rounded-xl text-sm shadow-lg hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer ring-1 ring-amber-300/60"
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="w-4 h-4 text-emerald-950" />
                 Ajukan Permohonan Baru
               </button>
               <button
                 onClick={onOpenValidatorModal}
-                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-sm border border-white/20 transition-all flex items-center gap-2 backdrop-blur-xs cursor-pointer"
+                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-sm border border-emerald-300/30 transition-all flex items-center gap-2 backdrop-blur-xs cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-300" />
                 Cek Keaslian Dokumen TTE
@@ -761,357 +978,576 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
             {/* Card 1: Semua Layanan */}
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => handleSelectSeksiTab('semua')}
-              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectSeksiTab('semua');
+                }
+              }}
+              className={`text-left rounded-2xl border transition-all flex flex-col group cursor-pointer relative overflow-hidden bg-white shadow-xs hover:shadow-lg select-none ${
                 activeKatalogTab === 'semua'
-                  ? 'border-emerald-600 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-600/20'
-                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+                  ? 'border-emerald-600 ring-2 ring-emerald-600/30 shadow-md'
+                  : 'border-slate-200 hover:border-emerald-300'
               }`}
             >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    activeKatalogTab === 'semua' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800'
-                  }`}>
-                    <Layers className="w-5 h-5" />
+              {/* Header Visual: Semua Layanan */}
+              <div className="relative w-full h-36 sm:h-40 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 flex flex-col items-center justify-center p-3 text-white text-center shrink-0">
+                <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-xs border border-white/30 flex items-center justify-center shadow-inner mb-2 group-hover:scale-110 transition-transform">
+                  <Layers className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full shadow-xs">
+                  Katalog Terpadu
+                </span>
+                <span className="text-[11px] font-medium text-white/90 mt-1">Seluruh Seksi PTSP</span>
+
+                {activeKatalogTab === 'semua' ? (
+                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-sm">
+                    <Check className="w-3 h-3" /> Aktif
                   </div>
-                  {activeKatalogTab === 'semua' ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      Aktif
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                      SEMUA
-                    </span>
-                  )}
+                ) : (
+                  <div className="absolute top-2.5 right-2.5 z-10 text-[10px] font-bold text-white/80 bg-black/30 backdrop-blur-xs px-2 py-0.5 rounded">
+                    SEMUA
+                  </div>
+                )}
+              </div>
+
+              {/* Card Body */}
+              <div className="p-3.5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
+                    activeKatalogTab === 'semua' ? 'text-emerald-950 font-black' : 'text-slate-900 group-hover:text-emerald-700'
+                  }`}>
+                    Semua Layanan
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    Katalog lengkap seluruh perizinan dan permohonan PTSP.
+                  </p>
                 </div>
 
-                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
-                  activeKatalogTab === 'semua' ? 'text-emerald-950 font-black' : 'text-slate-900 group-hover:text-emerald-700'
-                }`}>
-                  Semua Layanan
-                </h3>
-
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  Katalog lengkap seluruh perizinan dan permohonan PTSP.
-                </p>
-              </div>
-
-              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Total:</span>
-                <span className={`font-bold tabular-nums ${activeKatalogTab === 'semua' ? 'text-emerald-800 font-black' : 'text-slate-700'}`}>
-                  {katalogLayanan.length} Layanan
-                </span>
-              </div>
-            </button>
-
-            {/* Card 2: Kepegawaian */}
-            <button
-              type="button"
-              onClick={() => handleSelectSeksiTab('kepegawaian')}
-              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
-                activeKatalogTab === 'kepegawaian'
-                  ? 'border-purple-600 bg-purple-50/70 shadow-sm ring-2 ring-purple-600/20'
-                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    activeKatalogTab === 'kepegawaian' ? 'bg-purple-700 text-white' : 'bg-purple-100 text-purple-800'
-                  }`}>
-                    <Building2 className="w-5 h-5" />
-                  </div>
-                  {activeKatalogTab === 'kepegawaian' ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-700 text-white flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      Aktif
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">
-                      TU
-                    </span>
-                  )}
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">Total:</span>
+                  <span className={`font-bold tabular-nums ${activeKatalogTab === 'semua' ? 'text-emerald-800 font-black' : 'text-slate-700'}`}>
+                    {katalogLayanan.length} Layanan
+                  </span>
                 </div>
-
-                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
-                  activeKatalogTab === 'kepegawaian' ? 'text-purple-950 font-black' : 'text-slate-900 group-hover:text-purple-700'
-                }`}>
-                  Tata Usaha / Kepegawaian
-                </h3>
-
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  Administrasi ASN, kenaikan pangkat, cuti, berkala & mutasi.
-                </p>
-              </div>
-
-              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Layanan:</span>
-                <span className={`font-bold tabular-nums ${activeKatalogTab === 'kepegawaian' ? 'text-purple-900 font-black' : 'text-slate-700'}`}>
-                  {katalogLayanan.filter(l => l.seksi === 'kepegawaian').length} Layanan
-                </span>
-              </div>
-            </button>
-
-            {/* Card 3: Pendidikan Islam (Pendis) */}
-            <button
-              type="button"
-              onClick={() => handleSelectSeksiTab('pendis')}
-              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
-                activeKatalogTab === 'pendis'
-                  ? 'border-emerald-600 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-600/20'
-                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    activeKatalogTab === 'pendis' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'
-                  }`}>
-                    <GraduationCap className="w-5 h-5" />
-                  </div>
-                  {activeKatalogTab === 'pendis' ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-700 text-white flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      Aktif
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
-                      PENDIS
-                    </span>
-                  )}
-                </div>
-
-                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
-                  activeKatalogTab === 'pendis' ? 'text-emerald-950 font-black' : 'text-slate-900 group-hover:text-emerald-700'
-                }`}>
-                  Pendidikan Islam (Pendis)
-                </h3>
-
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  IJOP Madrasah, Pesantren, MDT, LPQ & Guru PAI.
-                </p>
-              </div>
-
-              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Layanan:</span>
-                <span className={`font-bold tabular-nums ${activeKatalogTab === 'pendis' ? 'text-emerald-800 font-black' : 'text-slate-700'}`}>
-                  {katalogLayanan.filter(l => l.seksi === 'pendis').length} Layanan
-                </span>
-              </div>
-            </button>
-
-            {/* Card 4: Bimas Islam */}
-            <button
-              type="button"
-              onClick={() => handleSelectSeksiTab('bimas_islam')}
-              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
-                activeKatalogTab === 'bimas_islam'
-                  ? 'border-teal-600 bg-teal-50/70 shadow-sm ring-2 ring-teal-600/20'
-                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    activeKatalogTab === 'bimas_islam' ? 'bg-teal-700 text-white' : 'bg-teal-100 text-teal-800'
-                  }`}>
-                    <Landmark className="w-5 h-5" />
-                  </div>
-                  {activeKatalogTab === 'bimas_islam' ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-700 text-white flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      Aktif
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-teal-800 bg-teal-100 px-1.5 py-0.5 rounded">
-                      BIMAS
-                    </span>
-                  )}
-                </div>
-
-                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
-                  activeKatalogTab === 'bimas_islam' ? 'text-teal-950 font-black' : 'text-slate-900 group-hover:text-teal-700'
-                }`}>
-                  Bimbingan Masyarakat Islam
-                </h3>
-
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  Kemasjidan, arah kiblat, tanah wakaf & majelis taklim.
-                </p>
-              </div>
-
-              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Layanan:</span>
-                <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_islam' ? 'text-teal-900 font-black' : 'text-slate-700'}`}>
-                  {katalogLayanan.filter(l => l.seksi === 'bimas_islam').length} Layanan
-                </span>
-              </div>
-            </button>
-
-            {/* Card 5: Bimas Hindu */}
-            <button
-              type="button"
-              onClick={() => handleSelectSeksiTab('bimas_hindu')}
-              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
-                activeKatalogTab === 'bimas_hindu'
-                  ? 'border-amber-600 bg-amber-50/70 shadow-sm ring-2 ring-amber-600/20'
-                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    activeKatalogTab === 'bimas_hindu' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    <Flame className="w-5 h-5" />
-                  </div>
-                  {activeKatalogTab === 'bimas_hindu' ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-600 text-white flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      Aktif
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
-                      HINDU
-                    </span>
-                  )}
-                </div>
-
-                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
-                  activeKatalogTab === 'bimas_hindu' ? 'text-amber-950 font-black' : 'text-slate-900 group-hover:text-amber-700'
-                }`}>
-                  Bimbingan Masyarakat Hindu
-                </h3>
-
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  Tanda daftar pura, pasraman & rohaniwan Hindu.
-                </p>
-              </div>
-
-              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Layanan:</span>
-                <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_hindu' ? 'text-amber-900 font-black' : 'text-slate-700'}`}>
-                  {katalogLayanan.filter(l => l.seksi === 'bimas_hindu').length} Layanan
-                </span>
-              </div>
-            </button>
-
-            {/* Card 6: Bimas Kristen */}
-            <button
-              type="button"
-              onClick={() => handleSelectSeksiTab('bimas_kristen')}
-              className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between group cursor-pointer relative ${
-                activeKatalogTab === 'bimas_kristen'
-                  ? 'border-indigo-600 bg-indigo-50/70 shadow-sm ring-2 ring-indigo-600/20'
-                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    activeKatalogTab === 'bimas_kristen' ? 'bg-indigo-700 text-white' : 'bg-indigo-100 text-indigo-800'
-                  }`}>
-                    <Cross className="w-5 h-5" />
-                  </div>
-                  {activeKatalogTab === 'bimas_kristen' ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-700 text-white flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      Aktif
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-1.5 py-0.5 rounded">
-                      KRISTEN
-                    </span>
-                  )}
-                </div>
-
-                <h3 className={`text-xs sm:text-sm font-bold leading-snug ${
-                  activeKatalogTab === 'bimas_kristen' ? 'text-indigo-950 font-black' : 'text-slate-900 group-hover:text-indigo-700'
-                }`}>
-                  Bimbingan Masyarakat Kristen
-                </h3>
-
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  Pendaftaran rumah ibadah, rohaniwan & guru agama.
-                </p>
-              </div>
-
-              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Layanan:</span>
-                <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_kristen' ? 'text-indigo-900 font-black' : 'text-slate-700'}`}>
-                  {katalogLayanan.filter(l => l.seksi === 'bimas_kristen').length} Layanan
-                </span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* SIPENDIS MURA Link Alert for Pendis tab */}
-        {activeKatalogTab === 'pendis' && (
-          <div className="mb-6 p-4 rounded-2xl bg-linear-to-r from-emerald-900 to-teal-900 text-white border border-emerald-500/40 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                <Globe className="w-5 h-5 text-amber-300" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                  Portal Web Resmi Baru: SIPENDIS MURA (sipendismura.my.id)
-                  <span className="text-[10px] font-extrabold bg-amber-400 text-emerald-950 px-2 py-0.2 rounded-full">Baru</span>
-                </h4>
-                <p className="text-xs text-emerald-200">
-                  Akses langsung pangkalan data madrasah, pesantren, dan pendidik PAI se-Kabupaten Murung Raya.
-                </p>
               </div>
             </div>
-            <a
-              href="https://sipendismura.my.id"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-black text-xs rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+
+            {/* Card 2: Kepegawaian (Foto Subbag TU) */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => handleSelectSeksiTab('kepegawaian')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectSeksiTab('kepegawaian');
+                }
+              }}
+              className={`text-left rounded-2xl border transition-all flex flex-col group cursor-pointer relative overflow-hidden bg-white shadow-xs hover:shadow-lg select-none ${
+                activeKatalogTab === 'kepegawaian'
+                  ? 'border-purple-600 ring-2 ring-purple-600/30 shadow-md bg-purple-50/20'
+                  : 'border-slate-200 hover:border-purple-300'
+              }`}
             >
-              Koneksi ke sipendismura.my.id <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+              {/* Tampilan Foto Seksi */}
+              <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-slate-100 shrink-0">
+                <img
+                  src={POSTER_LAYANAN_SEKSI.kepegawaian.image}
+                  alt="Poster Layanan Subbag TU Kepegawaian"
+                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent pointer-events-none" />
+
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs bg-purple-700 text-white backdrop-blur-xs border border-white/20">
+                    TU
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPosterSeksi('kepegawaian');
+                  }}
+                  title="Perbesar Poster Resmi (HD)"
+                  className="absolute top-2 right-2 z-10 w-7 h-7 rounded-lg bg-black/60 hover:bg-black/85 text-amber-300 hover:text-white backdrop-blur-xs flex items-center justify-center transition-all shadow-xs cursor-pointer"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+
+                {activeKatalogTab === 'kepegawaian' ? (
+                  <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-600 text-white shadow-sm">
+                    <Check className="w-3 h-3" /> Aktif
+                  </div>
+                ) : (
+                  <div className="absolute bottom-2 left-2 z-10 text-[9px] font-bold text-white/90 bg-black/50 backdrop-blur-xs px-1.5 py-0.5 rounded">
+                    Poster Resmi
+                  </div>
+                )}
+              </div>
+
+              {/* Card Body */}
+              <div className="p-3.5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className={`text-xs sm:text-sm font-bold leading-snug line-clamp-2 ${
+                    activeKatalogTab === 'kepegawaian' ? 'text-purple-900 font-black' : 'text-slate-900 group-hover:text-purple-700'
+                  }`}>
+                    Subbag TU / Kepegawaian
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    Administrasi ASN, kenaikan pangkat, cuti, berkala & mutasi.
+                  </p>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">Layanan:</span>
+                  <span className={`font-bold tabular-nums ${activeKatalogTab === 'kepegawaian' ? 'text-purple-700 font-black' : 'text-slate-700'}`}>
+                    {katalogLayanan.filter(l => l.seksi === 'kepegawaian').length} Layanan
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Pendidikan Islam (Foto Pendis) */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => handleSelectSeksiTab('pendis')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectSeksiTab('pendis');
+                }
+              }}
+              className={`text-left rounded-2xl border transition-all flex flex-col group cursor-pointer relative overflow-hidden bg-white shadow-xs hover:shadow-lg select-none ${
+                activeKatalogTab === 'pendis'
+                  ? 'border-emerald-600 ring-2 ring-emerald-600/30 shadow-md bg-emerald-50/20'
+                  : 'border-slate-200 hover:border-emerald-300'
+              }`}
+            >
+              {/* Tampilan Foto Seksi */}
+              <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-slate-100 shrink-0">
+                <img
+                  src={POSTER_LAYANAN_SEKSI.pendis.image}
+                  alt="Poster Layanan Seksi Pendidikan Islam"
+                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent pointer-events-none" />
+
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs bg-emerald-700 text-white backdrop-blur-xs border border-white/20">
+                    PENDIS
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPosterSeksi('pendis');
+                  }}
+                  title="Perbesar Poster Resmi (HD)"
+                  className="absolute top-2 right-2 z-10 w-7 h-7 rounded-lg bg-black/60 hover:bg-black/85 text-amber-300 hover:text-white backdrop-blur-xs flex items-center justify-center transition-all shadow-xs cursor-pointer"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+
+                {activeKatalogTab === 'pendis' ? (
+                  <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-sm">
+                    <Check className="w-3 h-3" /> Aktif
+                  </div>
+                ) : (
+                  <div className="absolute bottom-2 left-2 z-10 text-[9px] font-bold text-white/90 bg-black/50 backdrop-blur-xs px-1.5 py-0.5 rounded">
+                    Poster Resmi
+                  </div>
+                )}
+              </div>
+
+              {/* Card Body */}
+              <div className="p-3.5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className={`text-xs sm:text-sm font-bold leading-snug line-clamp-2 ${
+                    activeKatalogTab === 'pendis' ? 'text-emerald-900 font-black' : 'text-slate-900 group-hover:text-emerald-700'
+                  }`}>
+                    Pendidikan Islam (Pendis)
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    IJOP Madrasah, Pesantren, MDT, LPQ & Sertifikasi Guru.
+                  </p>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">Layanan:</span>
+                  <span className={`font-bold tabular-nums ${activeKatalogTab === 'pendis' ? 'text-emerald-700 font-black' : 'text-slate-700'}`}>
+                    {katalogLayanan.filter(l => l.seksi === 'pendis').length} Layanan
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Bimas Islam (Foto Bimas Islam) */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => handleSelectSeksiTab('bimas_islam')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectSeksiTab('bimas_islam');
+                }
+              }}
+              className={`text-left rounded-2xl border transition-all flex flex-col group cursor-pointer relative overflow-hidden bg-white shadow-xs hover:shadow-lg select-none ${
+                activeKatalogTab === 'bimas_islam'
+                  ? 'border-teal-600 ring-2 ring-teal-600/30 shadow-md bg-teal-50/20'
+                  : 'border-slate-200 hover:border-teal-300'
+              }`}
+            >
+              {/* Tampilan Foto Seksi */}
+              <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-slate-100 shrink-0">
+                <img
+                  src={POSTER_LAYANAN_SEKSI.bimas_islam.image}
+                  alt="Poster Layanan Bimas Islam"
+                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent pointer-events-none" />
+
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs bg-teal-700 text-white backdrop-blur-xs border border-white/20">
+                    BIMAS
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPosterSeksi('bimas_islam');
+                  }}
+                  title="Perbesar Poster Resmi (HD)"
+                  className="absolute top-2 right-2 z-10 w-7 h-7 rounded-lg bg-black/60 hover:bg-black/85 text-amber-300 hover:text-white backdrop-blur-xs flex items-center justify-center transition-all shadow-xs cursor-pointer"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+
+                {activeKatalogTab === 'bimas_islam' ? (
+                  <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-600 text-white shadow-sm">
+                    <Check className="w-3 h-3" /> Aktif
+                  </div>
+                ) : (
+                  <div className="absolute bottom-2 left-2 z-10 text-[9px] font-bold text-white/90 bg-black/50 backdrop-blur-xs px-1.5 py-0.5 rounded">
+                    Poster Resmi
+                  </div>
+                )}
+              </div>
+
+              {/* Card Body */}
+              <div className="p-3.5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className={`text-xs sm:text-sm font-bold leading-snug line-clamp-2 ${
+                    activeKatalogTab === 'bimas_islam' ? 'text-teal-900 font-black' : 'text-slate-900 group-hover:text-teal-700'
+                  }`}>
+                    Bimbingan Masyarakat Islam
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    Kemasjidan, arah kiblat, tanah wakaf & majelis taklim.
+                  </p>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">Layanan:</span>
+                  <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_islam' ? 'text-teal-700 font-black' : 'text-slate-700'}`}>
+                    {katalogLayanan.filter(l => l.seksi === 'bimas_islam').length} Layanan
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 5: Bimas Hindu (Foto Bimas Hindu) */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => handleSelectSeksiTab('bimas_hindu')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectSeksiTab('bimas_hindu');
+                }
+              }}
+              className={`text-left rounded-2xl border transition-all flex flex-col group cursor-pointer relative overflow-hidden bg-white shadow-xs hover:shadow-lg select-none ${
+                activeKatalogTab === 'bimas_hindu'
+                  ? 'border-amber-600 ring-2 ring-amber-600/30 shadow-md bg-amber-50/20'
+                  : 'border-slate-200 hover:border-amber-300'
+              }`}
+            >
+              {/* Tampilan Foto Seksi */}
+              <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-slate-100 shrink-0">
+                <img
+                  src={POSTER_LAYANAN_SEKSI.bimas_hindu.image}
+                  alt="Poster Layanan Bimas Hindu"
+                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent pointer-events-none" />
+
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs bg-amber-600 text-white backdrop-blur-xs border border-white/20">
+                    HINDU
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPosterSeksi('bimas_hindu');
+                  }}
+                  title="Perbesar Poster Resmi (HD)"
+                  className="absolute top-2 right-2 z-10 w-7 h-7 rounded-lg bg-black/60 hover:bg-black/85 text-amber-300 hover:text-white backdrop-blur-xs flex items-center justify-center transition-all shadow-xs cursor-pointer"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+
+                {activeKatalogTab === 'bimas_hindu' ? (
+                  <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-600 text-white shadow-sm">
+                    <Check className="w-3 h-3" /> Aktif
+                  </div>
+                ) : (
+                  <div className="absolute bottom-2 left-2 z-10 text-[9px] font-bold text-white/90 bg-black/50 backdrop-blur-xs px-1.5 py-0.5 rounded">
+                    Poster Resmi
+                  </div>
+                )}
+              </div>
+
+              {/* Card Body */}
+              <div className="p-3.5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className={`text-xs sm:text-sm font-bold leading-snug line-clamp-2 ${
+                    activeKatalogTab === 'bimas_hindu' ? 'text-amber-900 font-black' : 'text-slate-900 group-hover:text-amber-700'
+                  }`}>
+                    Bimbingan Masyarakat Hindu
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    Tanda daftar pura, pasraman & rohaniwan Hindu.
+                  </p>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">Layanan:</span>
+                  <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_hindu' ? 'text-amber-700 font-black' : 'text-slate-700'}`}>
+                    {katalogLayanan.filter(l => l.seksi === 'bimas_hindu').length} Layanan
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 6: Bimas Kristen (Foto Bimas Kristen) */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => handleSelectSeksiTab('bimas_kristen')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectSeksiTab('bimas_kristen');
+                }
+              }}
+              className={`text-left rounded-2xl border transition-all flex flex-col group cursor-pointer relative overflow-hidden bg-white shadow-xs hover:shadow-lg select-none ${
+                activeKatalogTab === 'bimas_kristen'
+                  ? 'border-blue-600 ring-2 ring-blue-600/30 shadow-md bg-blue-50/20'
+                  : 'border-slate-200 hover:border-blue-300'
+              }`}
+            >
+              {/* Tampilan Foto Seksi */}
+              <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-slate-100 shrink-0">
+                <img
+                  src={POSTER_LAYANAN_SEKSI.bimas_kristen.image}
+                  alt="Poster Layanan Bimas Kristen"
+                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent pointer-events-none" />
+
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs bg-blue-700 text-white backdrop-blur-xs border border-white/20">
+                    KRISTEN
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPosterSeksi('bimas_kristen');
+                  }}
+                  title="Perbesar Poster Resmi (HD)"
+                  className="absolute top-2 right-2 z-10 w-7 h-7 rounded-lg bg-black/60 hover:bg-black/85 text-amber-300 hover:text-white backdrop-blur-xs flex items-center justify-center transition-all shadow-xs cursor-pointer"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+
+                {activeKatalogTab === 'bimas_kristen' ? (
+                  <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white shadow-sm">
+                    <Check className="w-3 h-3" /> Aktif
+                  </div>
+                ) : (
+                  <div className="absolute bottom-2 left-2 z-10 text-[9px] font-bold text-white/90 bg-black/50 backdrop-blur-xs px-1.5 py-0.5 rounded">
+                    Poster Resmi
+                  </div>
+                )}
+              </div>
+
+              {/* Card Body */}
+              <div className="p-3.5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className={`text-xs sm:text-sm font-bold leading-snug line-clamp-2 ${
+                    activeKatalogTab === 'bimas_kristen' ? 'text-blue-900 font-black' : 'text-slate-900 group-hover:text-blue-700'
+                  }`}>
+                    Bimbingan Masyarakat Kristen
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    Pendaftaran rumah ibadah, rohaniwan & guru agama.
+                  </p>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">Layanan:</span>
+                  <span className={`font-bold tabular-nums ${activeKatalogTab === 'bimas_kristen' ? 'text-blue-700 font-black' : 'text-slate-700'}`}>
+                    {katalogLayanan.filter(l => l.seksi === 'bimas_kristen').length} Layanan
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Container Utama Daftar Seluruh Layanan PTSP */}
         <div id="daftar-layanan-ptsp" className="scroll-mt-24 mb-4">
           {activeKatalogTab !== 'semua' ? (
-            <div className="bg-gradient-to-r from-emerald-900 via-teal-950 to-emerald-900 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-emerald-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-white/10 text-amber-300 flex items-center justify-center shrink-0 border border-white/20">
-                  {getSeksiIcon(activeKatalogTab)}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-emerald-950 px-2 py-0.5 rounded-full">
-                      Seksi Terpilih
+            /* Dedicated Showcase Banner for Selected Seksi without photo (Clean Gradient Header) */
+            <div 
+              className="relative overflow-hidden text-white rounded-3xl shadow-xl border-2 mb-6 p-6 sm:p-8 animate-in fade-in"
+              style={{
+                background: POSTER_LAYANAN_SEKSI[activeKatalogTab].heroGradient,
+                borderColor: activeKatalogTab === 'kepegawaian' ? 'rgba(168, 85, 247, 0.45)' :
+                             activeKatalogTab === 'pendis' ? 'rgba(16, 185, 129, 0.45)' :
+                             activeKatalogTab === 'bimas_islam' ? 'rgba(20, 184, 166, 0.45)' :
+                             activeKatalogTab === 'bimas_hindu' ? 'rgba(245, 158, 11, 0.45)' :
+                             'rgba(59, 130, 246, 0.45)'
+              }}
+            >
+              <div className={`absolute -right-20 -top-20 w-80 h-80 rounded-full ${POSTER_LAYANAN_SEKSI[activeKatalogTab].accentGlow} blur-3xl pointer-events-none`} />
+
+              <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span className="text-[11px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-3 py-1 rounded-full shadow-xs">
+                      PTSP KEMENTERIAN AGAMA
                     </span>
-                    <span className="text-xs text-emerald-200 font-medium">
-                      Kepala: {SEKSI_CONFIG[activeKatalogTab].kepala}
+                    <span className="text-[11px] font-bold bg-white/15 text-white border border-white/20 px-2.5 py-0.5 rounded-full">
+                      {POSTER_LAYANAN_SEKSI[activeKatalogTab].nama}
+                    </span>
+                    <span className="text-xs text-white/80 font-medium hidden sm:inline">
+                      Kepala / Pejabat: {SEKSI_CONFIG[activeKatalogTab].kepala}
                     </span>
                   </div>
-                  <h3 className="text-base sm:text-lg font-black text-white mt-1">
-                    Seluruh Layanan {SEKSI_CONFIG[activeKatalogTab].nama}
-                  </h3>
-                  <p className="text-xs text-emerald-100/90 mt-0.5">
-                    Menampilkan seluruh <strong className="text-amber-300 font-bold">{filteredLayanan.length} layanan resmi</strong> yang siap diajukan secara langsung.
+
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
+                    {POSTER_LAYANAN_SEKSI[activeKatalogTab].tagline}
+                  </h2>
+                  <p className="text-amber-300 font-semibold italic text-sm sm:text-base mt-1">
+                    "{POSTER_LAYANAN_SEKSI[activeKatalogTab].slogan}"
                   </p>
+                  <p className="text-xs sm:text-sm text-white/90 mt-2 max-w-2xl leading-relaxed">
+                    {SEKSI_CONFIG[activeKatalogTab].deskripsi}. Pelayanan terpadu berbasis digital dengan validasi Tanda Tangan Elektronik resmi (BSrE BSSN).
+                  </p>
+
+                  {/* 4 Pilar Layanan Sesuai Poster Resmi */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-5 max-w-xl">
+                    {POSTER_LAYANAN_SEKSI[activeKatalogTab].pilars.map((pilar, pIdx) => (
+                      <div key={pIdx} className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl px-3 py-2 text-center">
+                        {pIdx === 0 && <Clock className="w-4 h-4 text-amber-300 mx-auto mb-0.5" />}
+                        {pIdx === 1 && <Award className="w-4 h-4 text-emerald-300 mx-auto mb-0.5" />}
+                        {pIdx === 2 && <ShieldCheck className="w-4 h-4 text-cyan-300 mx-auto mb-0.5" />}
+                        {pIdx === 3 && <Sparkles className="w-4 h-4 text-yellow-300 mx-auto mb-0.5" />}
+                        <div className="text-xs font-black text-white">{pilar.label}</div>
+                        <div className="text-[10px] text-white/80">{pilar.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap items-center gap-2.5 mt-5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPosterSeksi(activeKatalogTab)}
+                      className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>Lihat Poster Resmi (HD)</span>
+                    </button>
+
+                    {activeKatalogTab === 'pendis' && (
+                      <a
+                        href="https://sipendismura.my.id"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Globe className="w-4 h-4 text-cyan-300" />
+                        <span>Portal Web Baru: sipendismura.my.id</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectSeksiTab('semua')}
+                      className="px-3.5 py-2 bg-transparent hover:bg-white/10 text-white/80 hover:text-white text-xs font-semibold rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      Tampilkan Semua Seksi <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right side: Quick Info Card without photo */}
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-5 w-full lg:w-72 shrink-0 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[10px] font-bold text-amber-300 uppercase tracking-wider mb-1">
+                      Status Pelayanan
+                    </div>
+                    <div className="text-2xl font-black text-white">
+                      {katalogLayanan.filter(l => l.seksi === activeKatalogTab).length}
+                      <span className="text-sm font-medium text-white/80 ml-1.5">Layanan Aktif</span>
+                    </div>
+                    <p className="text-[11px] text-white/70 mt-1 leading-snug">
+                      Seluruh pengajuan diproses langsung oleh petugas {SEKSI_CONFIG[activeKatalogTab].singkatan} dan siap TTE Kepala Kantor.
+                    </p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-white/15 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPosterSeksi(activeKatalogTab)}
+                      className="w-full py-2 bg-white/15 hover:bg-white/25 text-white border border-white/25 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Buka Poster Resmi Full HD</span>
+                    </button>
+                    <div className="text-[10px] text-center text-white/60">
+                      Format Publikasi Resmi Kemenag Kab. Murung Raya
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={() => handleSelectSeksiTab('semua')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-xs shrink-0"
-              >
-                <span>Tampilkan Semua Seksi</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
             </div>
           ) : (
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -2206,6 +2642,97 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
           onClose={() => setPortalViewerData(null)}
           onReturnToBeranda={handleReturnToBerandaFromPortal}
         />
+      )}
+
+      {/* 14. MODAL POSTER RESMI LAYANAN SELURUH SEKSI */}
+      {selectedPosterSeksi && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="relative bg-slate-900 border border-slate-700 rounded-3xl max-w-4xl max-h-[94vh] flex flex-col shadow-2xl overflow-hidden w-full">
+            {/* Header modal */}
+            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 px-5 py-3.5 border-b border-slate-800 flex items-center justify-between gap-3 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black">
+                  <ImageIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>{POSTER_LAYANAN_SEKSI[selectedPosterSeksi].tagline}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-cyan-300 border border-white/15">
+                      Poster Resmi
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-300">
+                    Kementerian Agama Kabupaten Murung Raya • "{POSTER_LAYANAN_SEKSI[selectedPosterSeksi].slogan}"
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={POSTER_LAYANAN_SEKSI[selectedPosterSeksi].image}
+                  download={`Poster_Layanan_${POSTER_LAYANAN_SEKSI[selectedPosterSeksi].singkatan.replace(/\s+/g, '_')}.png`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-xs"
+                  title="Unduh file poster"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Buka Resolusi Asli</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPosterSeksi(null)}
+                  className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Seksi Selector Tabs in Modal */}
+            <div className="bg-slate-950 px-4 py-2 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto scrollbar-none text-xs">
+              <span className="text-slate-400 font-bold uppercase text-[10px] mr-1 shrink-0">Pilih Poster:</span>
+              {(['kepegawaian', 'pendis', 'bimas_islam', 'bimas_kristen', 'bimas_hindu'] as SeksiType[]).map((seksiKey) => (
+                <button
+                  key={seksiKey}
+                  type="button"
+                  onClick={() => setSelectedPosterSeksi(seksiKey)}
+                  className={`px-3 py-1 rounded-lg font-bold text-xs whitespace-nowrap transition-all cursor-pointer ${
+                    selectedPosterSeksi === seksiKey
+                      ? 'bg-amber-400 text-slate-950 shadow-xs'
+                      : 'bg-white/5 hover:bg-white/15 text-slate-300'
+                  }`}
+                >
+                  {POSTER_LAYANAN_SEKSI[seksiKey].singkatan}
+                </button>
+              ))}
+            </div>
+
+            {/* Content: Poster Full Image */}
+            <div className="p-3 sm:p-5 overflow-auto flex items-center justify-center bg-slate-950/70 min-h-[50vh]">
+              <img
+                src={POSTER_LAYANAN_SEKSI[selectedPosterSeksi].image}
+                alt={`Poster Resmi ${POSTER_LAYANAN_SEKSI[selectedPosterSeksi].nama}`}
+                className="max-h-[68vh] w-auto rounded-xl shadow-2xl object-contain border border-white/10"
+              />
+            </div>
+
+            {/* Footer with quick action */}
+            <div className="bg-slate-900 px-5 py-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+              <div className="flex items-center gap-2 text-cyan-300 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Format Resmi Kementerian Agama • {POSTER_LAYANAN_SEKSI[selectedPosterSeksi].pilars.map(p => p.label).join(' • ')}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPosterSeksi(null)}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                Tutup Pratinjau
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

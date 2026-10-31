@@ -1,1 +1,50 @@
 @import "tailwindcss";
+
+@keyframes welcomeArmGesture {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-14deg) translateY(-1px);
+  }
+  50% {
+    transform: rotate(-24deg) translateY(-2px);
+  }
+  75% {
+    transform: rotate(-10deg) translateY(-1px);
+  }
+}
+
+@keyframes welcomeBodyGreeting {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(1.5px) rotate(1.5deg);
+  }
+}
+
+@keyframes welcomeHandGlow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.animate-welcome-arm {
+  transform-origin: 32px 30px;
+  animation: welcomeArmGesture 2.2s ease-in-out infinite;
+}
+
+.animate-welcome-body {
+  transform-origin: 26px 44px;
+  animation: welcomeBodyGreeting 2.2s ease-in-out infinite;
+}
+
+.animate-welcome-glow {
+  animation: welcomeHandGlow 2s ease-in-out infinite;
+}

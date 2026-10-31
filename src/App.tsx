@@ -47,7 +47,7 @@ const MainAppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900 selection:bg-emerald-600 selection:text-white">
+    <div className="min-h-screen bg-[#edf9f1] flex flex-col font-sans text-slate-900 selection:bg-emerald-600 selection:text-white">
       {/* 1. Header with Role Switcher, Real-time Clock, and Audio Toggle */}
       <Header
         onOpenPermohonanModal={() => handleOpenPermohonan()}
