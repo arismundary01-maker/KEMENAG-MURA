@@ -100,7 +100,10 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 relative text-white backdrop-blur-md shadow-md border-b border-white/10 bg-black/40">
+      <header 
+        className="sticky top-0 z-40 relative text-white backdrop-blur-md shadow-md border-b border-[#33CC66]/35"
+        style={{ backgroundColor: 'rgba(51, 204, 102, 0.35)' }}
+      >
         {/* Content Container (Header 2 & Header 3 Terpadu) */}
         <div className="relative z-10">
           {/* Main Header Container (Header 2) - Identitas Resmi Kementerian Agama */}
@@ -121,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Hanya ada tulisan: PTSP (Pelayanan Terpadu Satu Pintu) Kemenag Mura */}
               <div className="flex items-center min-w-0">
-                <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-black text-white tracking-tight leading-snug group-hover:text-amber-300 transition-colors drop-shadow-sm">
+                <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-black text-white tracking-tight leading-snug group-hover:text-amber-300 transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
                   PTSP (Pelayanan Terpadu Satu Pintu) Kemenag Mura
                 </h1>
               </div>
@@ -319,7 +322,10 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Navigation Bar (Desktop) - Header 3 (Pita Navigasi Bersih & Fresh Kemenag) */}
-        <div className="bg-black/10 backdrop-blur-md border-t border-white/10 px-4 sm:px-6">
+        <div 
+          className="backdrop-blur-md border-t border-[#33CC66]/30 px-4 sm:px-6"
+          style={{ backgroundColor: 'rgba(51, 204, 102, 0.20)' }}
+        >
           <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto py-2 scrollbar-none">
             {isPublic ? (
               /* =========================================================================
