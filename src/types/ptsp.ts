@@ -37,6 +37,18 @@ export interface DokumenPersyaratan {
   fileUrl?: string;
 }
 
+export interface TemplateBerkas {
+  id: string;
+  namaDokumen: string;
+  syaratTerkait: string;
+  jenisFormat: 'Surat Permohonan' | 'Proposal' | 'Surat Pernyataan' | 'Formulir' | 'Daftar Lampiran' | 'Berita Acara';
+  ekstensiFile: '.docx' | '.pdf' | '.xlsx';
+  ukuranFile: string;
+  deskripsiSingkat: string;
+  kontenTemplate: string;
+  petunjukPengisian: string[];
+}
+
 export interface LayananKatalog {
   id: string;
   kode: string;
@@ -48,6 +60,7 @@ export interface LayananKatalog {
   dasarHukum: string;
   outputDokumen: string;
   dokumenSyarat: string[];
+  templateBerkas?: TemplateBerkas[];
   portalResmiUrl?: string;
   namaPortalResmi?: string;
   keteranganPortal?: string;

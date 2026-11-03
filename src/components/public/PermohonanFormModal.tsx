@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { usePTSP } from '../../context/PTSPContext';
 import { KATALOG_LAYANAN, SEKSI_CONFIG } from '../../data/initialData';
-import { LayananKatalog, SeksiType, DokumenPersyaratan } from '../../types/ptsp';
+import { LayananKatalog, SeksiType, DokumenPersyaratan, TemplateBerkas } from '../../types/ptsp';
+import { getTemplatesForLayanan, getTemplateForSyarat } from '../../data/templateLayananData';
+import { TemplateViewerModal } from './TemplateViewerModal';
 import { 
   FileText, 
   Upload, 
@@ -65,6 +67,21 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, { namaFile: string; ukuranFile: string }>>({});
   const [errorMsg, setErrorMsg] = useState('');
   const [submittedResi, setSubmittedResi] = useState<string | null>(null);
+
+  // Template Viewer Modal state
+  const [selectedTemplateForModal, setSelectedTemplateForModal] = useState<TemplateBerkas | null>(null);
+  const [allTemplatesForModal, setAllTemplatesForModal] = useState<TemplateBerkas[]>([]);
+
+  const handleOpenTemplateViewer = (syaratNama?: string) => {
+    const allTpls = getTemplatesForLayanan(currentLayanan.id, currentLayanan.namaLayanan, currentLayanan.dokumenSyarat);
+    setAllTemplatesForModal(allTpls);
+    if (syaratNama) {
+      const matched = getTemplateForSyarat(currentLayanan.id, currentLayanan.namaLayanan, syaratNama);
+      setSelectedTemplateForModal(matched);
+    } else {
+      setSelectedTemplateForModal(allTpls[0] || null);
+    }
+  };
 
   // Sinkronisasi status modal saat dibuka:
   // 1. Jika dibuka dari katalog layanan beranda ("Ajukan"), langsung ke Step 2 (Data Pemohon & Unggah Berkas)
@@ -508,6 +525,24 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
                   </span>
                 </div>
 
+                {/* Template Format Banner */}
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span className="text-xs text-emerald-950">
+                      Tersedia <b>Format Template Resmi</b> (Surat Permohonan, Proposal, Pernyataan) untuk layanan ini.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenTemplateViewer()}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-2xs shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Buka Semua Template ({currentLayanan.dokumenSyarat.length})</span>
+                  </button>
+                </div>
+
                 <div className="space-y-3">
                   {currentLayanan.dokumenSyarat.map((syarat, idx) => {
                     const isUploaded = !!uploadedDocs[idx];
@@ -540,18 +575,30 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleSimulateFileUpload(idx)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                            isUploaded
-                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                              : 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-2xs'
-                          }`}
-                        >
-                          <Upload className="w-3.5 h-3.5 inline mr-1" />
-                          {isUploaded ? 'Ganti Berkas' : 'Unggah File'}
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenTemplateViewer(syarat)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center gap-1 cursor-pointer"
+                            title="Lihat format contoh resmi dokumen ini"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Format Template</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSimulateFileUpload(idx)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              isUploaded
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                : 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-2xs'
+                            }`}
+                          >
+                            <Upload className="w-3.5 h-3.5 inline mr-1" />
+                            {isUploaded ? 'Ganti Berkas' : 'Unggah File'}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -631,7 +678,18 @@ export const PermohonanFormModal: React.FC<PermohonanFormModalProps> = ({
             </div>
           </div>
         )}
+
+        {/* Template Viewer Modal */}
+        <TemplateViewerModal
+          isOpen={!!selectedTemplateForModal}
+          onClose={() => setSelectedTemplateForModal(null)}
+          template={selectedTemplateForModal}
+          layananNama={currentLayanan.namaLayanan}
+          allTemplates={allTemplatesForModal}
+          onSelectTemplate={(t) => setSelectedTemplateForModal(t)}
+        />
       </div>
     </div>
   );
 };
+

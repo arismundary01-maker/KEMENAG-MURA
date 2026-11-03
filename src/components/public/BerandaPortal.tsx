@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { usePTSP } from '../../context/PTSPContext';
 import { SEKSI_CONFIG } from '../../data/initialData';
-import { SeksiType, LayananKatalog, BeritaItem, KepalaKantorHistory, MenuAplikasiWeb } from '../../types/ptsp';
+import { SeksiType, LayananKatalog, BeritaItem, KepalaKantorHistory, MenuAplikasiWeb, TemplateBerkas } from '../../types/ptsp';
+import { getTemplatesForLayanan, getTemplateForSyarat } from '../../data/templateLayananData';
+import { TemplateViewerModal } from './TemplateViewerModal';
 import { 
   Search, 
   FileText, 
@@ -37,7 +39,8 @@ import {
   Link as LinkIcon,
   Eye,
   Maximize2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Download
 } from 'lucide-react';
 import { WebPortalViewerModal } from './WebPortalViewerModal';
 
@@ -81,6 +84,23 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
   const [trackingInput, setTrackingInput] = useState('');
   const [selectedBerita, setSelectedBerita] = useState<BeritaItem | null>(null);
   const [selectedDetailLayanan, setSelectedDetailLayanan] = useState<LayananKatalog | null>(null);
+
+  // Template Viewer Modal state
+  const [selectedTemplateForView, setSelectedTemplateForView] = useState<TemplateBerkas | null>(null);
+  const [allTemplatesForView, setAllTemplatesForView] = useState<TemplateBerkas[]>([]);
+  const [templateLayananNama, setTemplateLayananNama] = useState<string>('');
+
+  const handleOpenTemplateViewer = (lay: LayananKatalog, syaratNama?: string) => {
+    const allTpls = getTemplatesForLayanan(lay.id, lay.namaLayanan, lay.dokumenSyarat);
+    setAllTemplatesForView(allTpls);
+    setTemplateLayananNama(lay.namaLayanan);
+    if (syaratNama) {
+      const matched = getTemplateForSyarat(lay.id, lay.namaLayanan, syaratNama);
+      setSelectedTemplateForView(matched);
+    } else {
+      setSelectedTemplateForView(allTpls[0] || null);
+    }
+  };
 
   // Poster Resmi Layanan Seluruh Seksi / Unit Layanan dari Unggahan Pengguna
   const POSTER_LAYANAN_SEKSI: Record<SeksiType, {
@@ -672,7 +692,7 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#edf9f1] pb-16">
+    <div className="min-h-screen bg-slate-50 pb-16">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
@@ -681,26 +701,24 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
         </div>
       )}
 
-      {/* 1. HERO SECTION - Berlatar Belakang Gedung Kantor Kementerian Agama */}
-      <section className="relative text-white overflow-hidden py-14 md:py-24 px-4 sm:px-6 border-b border-emerald-700/40">
-        {/* Background Foto Gedung Kantor Kementerian Agama */}
+      {/* 1. HERO SECTION - Berlatar Belakang Foto Kantor & ASN Kementerian Agama Kabupaten Murung Raya */}
+      <section className="relative text-white overflow-hidden py-14 md:py-24 px-4 sm:px-6 border-b border-slate-800/30">
+        {/* Background Foto Asli Tanpa Warna Hijau Buatan */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <img 
-            src="/assets/aistudio/gedung_kantor_kemenag_beranda.jpg" 
-            alt="Gedung Kantor Kementerian Agama Republik Indonesia" 
-            className="w-full h-full object-cover object-center scale-[1.01] filter brightness-95 contrast-105"
+            src="/assets/aistudio/WhatsApp_Image_2026-11-03_at_19.34.46_3a9b0956.jpeg" 
+            alt="Kantor dan Keluarga Besar ASN Kementerian Agama Kabupaten Murung Raya" 
+            className="w-full h-full object-cover object-[center_35%] scale-[1.01]"
           />
-          {/* Vignette semi-transparan elegan agar foto gedung kantor kementerian agama terlihat jelas dan teks terbaca tajam */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#012215]/70 via-[#012618]/55 to-[#011a10]/80 pointer-events-none"></div>
+          {/* Overlay netral semi-transparan (tanpa warna hijau) agar warna asli foto tetap natural dan teks terbaca jelas */}
+          <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
         </div>
 
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-emerald-400/20 blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-amber-400/15 blur-3xl pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/70 border border-emerald-400/40 text-emerald-200 text-xs font-semibold mb-4 backdrop-blur-xs shadow-xs">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-white/20 text-white text-xs font-semibold mb-4 backdrop-blur-xs shadow-xs">
               <ShieldCheck className="w-4 h-4 text-amber-300" />
               Sistem Pelayanan Terpadu Satu Pintu & TTE BSrE Terintegrasi
             </div>
@@ -1716,17 +1734,25 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
                   </div>
 
                   {/* Right: Action Buttons */}
-                  <div className="shrink-0 flex items-center sm:flex-row lg:flex-col gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 justify-end min-w-[170px]">
+                  <div className="shrink-0 flex items-center sm:flex-row lg:flex-col gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 justify-end min-w-[175px]">
                     <button
                       onClick={() => setSelectedDetailLayanan(lay)}
-                      className="w-full text-xs font-bold text-slate-700 hover:text-emerald-800 bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 py-2.5 px-3.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      className="w-full text-xs font-bold text-slate-700 hover:text-emerald-800 bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 py-2 px-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
                     >
                       <FileText className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Lihat Syarat ({lay.dokumenSyarat.length})</span>
                     </button>
                     <button
+                      onClick={() => handleOpenTemplateViewer(lay)}
+                      className="w-full text-xs font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 py-2 px-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      title="Lihat dan unduh format template resmi untuk layanan ini"
+                    >
+                      <Download className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Format Template</span>
+                    </button>
+                    <button
                       onClick={() => onOpenPermohonanModal(lay)}
-                      className="w-full text-xs sm:text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 px-4 rounded-xl transition-all shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full text-xs sm:text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white py-2 px-3 rounded-xl transition-all shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <span>Ajukan</span>
                       <ArrowRight className="w-4 h-4" />
@@ -1986,16 +2012,37 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
               </div>
 
               <div>
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Dokumen Persyaratan Wajib (Diunggah Digital)
-                </h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Dokumen Persyaratan Wajib (Diunggah Digital)
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenTemplateViewer(selectedDetailLayanan)}
+                    className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Semua Format Template ({selectedDetailLayanan.dokumenSyarat.length})</span>
+                  </button>
+                </div>
                 <ul className="space-y-2">
                   {selectedDetailLayanan.dokumenSyarat.map((syarat, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-800 bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100">
-                      <span className="w-5 h-5 rounded-full bg-emerald-700 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                        {idx + 1}
-                      </span>
-                      <span>{syarat}</span>
+                    <li key={idx} className="flex items-center justify-between gap-2 text-xs text-slate-800 bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100">
+                      <div className="flex items-start gap-2 flex-1">
+                        <span className="w-5 h-5 rounded-full bg-emerald-700 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <span className="leading-snug">{syarat}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenTemplateViewer(selectedDetailLayanan, syarat)}
+                        className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 bg-white hover:bg-emerald-100/70 border border-emerald-300 px-2 py-1 rounded-md transition-colors flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                        title="Lihat format contoh resmi berkas ini"
+                      >
+                        <FileText className="w-3 h-3 text-emerald-700" />
+                        <span>Format Template</span>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -2734,6 +2781,17 @@ export const BerandaPortal: React.FC<BerandaPortalProps> = ({
           </div>
         </div>
       )}
+
+      {/* 8. FORMAT TEMPLATE BERKAS VIEWER MODAL */}
+      <TemplateViewerModal
+        isOpen={!!selectedTemplateForView}
+        onClose={() => setSelectedTemplateForView(null)}
+        template={selectedTemplateForView}
+        layananNama={templateLayananNama}
+        allTemplates={allTemplatesForView}
+        onSelectTemplate={(t) => setSelectedTemplateForView(t)}
+      />
     </div>
   );
 };
+

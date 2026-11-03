@@ -47,7 +47,13 @@ const MainAppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#edf9f1] flex flex-col font-sans text-slate-900 selection:bg-emerald-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-emerald-600 selection:text-white relative">
+      {/* Background Ambience Web Sesuai Foto Resmi Unggahan Pengguna */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none opacity-[0.035] bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('/assets/aistudio/WhatsApp_Image_2026-11-03_at_19.34.46_3a9b0956.jpeg')` }}
+      />
+
       {/* 1. Header with Role Switcher, Real-time Clock, and Audio Toggle */}
       <Header
         onOpenPermohonanModal={() => handleOpenPermohonan()}
@@ -56,7 +62,7 @@ const MainAppContent: React.FC = () => {
       />
 
       {/* 2. Main Active View Content */}
-      <main className="flex-1">
+      <main className="flex-1 relative z-10">
         {activeView === 'public_portal' && (
           <BerandaPortal
             onOpenPermohonanModal={handleOpenPermohonan}
